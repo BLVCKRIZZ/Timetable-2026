@@ -1186,8 +1186,9 @@
     .table-wrap {
       max-height: 72vh;
       overflow: auto;
-      touch-action: auto;
+      touch-action: pan-x pan-y;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
     }
 
     th:first-child,
@@ -1340,8 +1341,9 @@
   @media (hover: none) {
     .table-wrap {
       overflow: auto;
-      touch-action: auto;
+      touch-action: pan-x pan-y;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
     }
 
     th:first-child,
