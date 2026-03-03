@@ -59,6 +59,7 @@
   const CUSTOMIZE_MAX_FAILED_ATTEMPTS = 3;
   const CUSTOMIZE_LOCKOUT_MS = 60 * 1000;
   const CUSTOMIZE_LOCKOUT_STORAGE_PREFIX = 'customize_unlock_lockout_';
+  const TIMETABLE_SWIPE_HINT_STORAGE_KEY = 'timetable_swipe_hint_dismissed';
   const RESET_PASSWORD_COOLDOWN_MS = 30 * 1000;
   let resetPasswordBlockedUntil = 0;
   let resetPasswordCooldownTimer = null;
@@ -556,6 +557,45 @@
       return LOCALHOST_AUTH_REDIRECT_URL;
     }
     return null;
+  }
+
+  function initTimetableSwipeHint() {
+    const swipeHint = document.getElementById('timetable-swipe-hint');
+    const tableWrap = document.querySelector('.table-wrap');
+    if (!swipeHint || !tableWrap) return;
+
+    const isMobileViewport = window.matchMedia('(max-width: 720px)').matches;
+    const isTouchDevice = window.matchMedia('(hover: none)').matches || 'ontouchstart' in window;
+    if (!isMobileViewport || !isTouchDevice) {
+      swipeHint.classList.add('hidden');
+      return;
+    }
+
+    if (localStorage.getItem(TIMETABLE_SWIPE_HINT_STORAGE_KEY) === '1') {
+      swipeHint.classList.add('hidden');
+      return;
+    }
+
+    let hasDismissed = false;
+    const dismiss = () => {
+      if (hasDismissed) return;
+      hasDismissed = true;
+      swipeHint.classList.add('hidden');
+      localStorage.setItem(TIMETABLE_SWIPE_HINT_STORAGE_KEY, '1');
+      tableWrap.removeEventListener('scroll', onTableScroll);
+      swipeHint.removeEventListener('click', dismiss);
+      clearTimeout(autoDismissTimer);
+    };
+
+    const onTableScroll = () => {
+      if (tableWrap.scrollLeft > 12) {
+        dismiss();
+      }
+    };
+
+    const autoDismissTimer = setTimeout(dismiss, 7000);
+    tableWrap.addEventListener('scroll', onTableScroll, { passive: true });
+    swipeHint.addEventListener('click', dismiss);
   }
 
   function getUserStateStorageKey(userId) {
@@ -2588,6 +2628,7 @@
   switchView('timetable');
   setNowLineTheme('cyan');
   startNowLine();
+  initTimetableSwipeHint();
   setAuthMode('signin');
   window.addEventListener('beforeunload', saveStateForCurrentUser);
   const appEmailInput = document.getElementById('app-email');

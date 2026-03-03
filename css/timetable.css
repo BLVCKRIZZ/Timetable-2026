@@ -908,6 +908,15 @@
     margin-left: auto;
   }
 
+  .swipe-hint {
+    display: none;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: #7a6752;
+    padding: 8px 12px 0;
+    user-select: none;
+  }
+
   .color-tools {
     display: flex;
     align-items: center;
@@ -1016,6 +1025,14 @@
   }
 
   @media (max-width: 720px) {
+    .swipe-hint {
+      display: block;
+    }
+
+    .swipe-hint.hidden {
+      display: none;
+    }
+
     .settings-panel.open {
       max-height: 72vh;
     }
