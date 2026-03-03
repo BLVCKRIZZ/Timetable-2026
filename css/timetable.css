@@ -1041,6 +1041,10 @@
   }
 
   @media (max-width: 720px) {
+    #timetable {
+      min-width: 980px;
+    }
+
     .build-badge {
       right: 8px;
       bottom: 8px;
@@ -1182,7 +1186,7 @@
     .table-wrap {
       max-height: 72vh;
       overflow: auto;
-      touch-action: pan-x pan-y;
+      touch-action: pan-x;
     }
 
     th:first-child,
@@ -1219,6 +1223,10 @@
   }
 
   @media (max-width: 380px) {
+    #timetable {
+      min-width: 900px;
+    }
+
     body {
       padding: 8px 6px;
       padding-left: max(6px, env(safe-area-inset-left));
@@ -1331,7 +1339,7 @@
   @media (hover: none) {
     .table-wrap {
       overflow: auto;
-      touch-action: pan-x pan-y;
+      touch-action: pan-x;
       -webkit-overflow-scrolling: touch;
     }
 
@@ -1347,7 +1355,7 @@
     th input,
     td input,
     td textarea {
-      touch-action: pan-x pan-y;
+      touch-action: pan-x;
     }
 
     .page:hover,
