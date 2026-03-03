@@ -1306,6 +1306,27 @@
   }
 
   @media (hover: none) {
+    .table-wrap {
+      overflow: auto;
+      touch-action: pan-x pan-y;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    th:first-child,
+    td:first-child {
+      position: static;
+      left: auto;
+      box-shadow: none;
+    }
+
+    th,
+    td,
+    th input,
+    td input,
+    td textarea {
+      touch-action: pan-x pan-y;
+    }
+
     .page:hover,
     .settings-card:hover,
     .calendar-cell:hover,
