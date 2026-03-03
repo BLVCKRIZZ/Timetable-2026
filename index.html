@@ -195,11 +195,12 @@
 <div id="build-badge" class="build-badge" aria-live="polite"></div>
 <script>
   (function loadTimetableScript() {
+    var cacheToken = '?b=20260303-8a';
     var primary = document.createElement('script');
-    primary.src = 'js/timetable.v20260303-8.js';
+    primary.src = 'js/timetable.v20260303-8.js' + cacheToken;
     primary.onerror = function () {
       var fallback = document.createElement('script');
-      fallback.src = 'js/timetable.v20260303-7.js';
+      fallback.src = 'js/timetable.v20260303-7.js' + cacheToken;
       document.body.appendChild(fallback);
     };
     document.body.appendChild(primary);

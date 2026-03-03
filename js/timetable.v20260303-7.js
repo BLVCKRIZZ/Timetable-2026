@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260303-7';
+  const APP_BUILD_VERSION = '20260303-8';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -682,6 +682,58 @@
     const autoDismissTimer = setTimeout(dismiss, 7000);
     tableWrap.addEventListener('scroll', onTableScroll, { passive: true });
     swipeHint.addEventListener('click', dismiss);
+  }
+
+  function initHorizontalPanAssist() {
+    const tableWrap = document.querySelector('.table-wrap');
+    if (!tableWrap) return;
+
+    let startX = 0;
+    let startY = 0;
+    let startScrollLeft = 0;
+    let activeTouchId = null;
+    let isHorizontalDrag = false;
+    const threshold = 10;
+
+    tableWrap.addEventListener('touchstart', (event) => {
+      if (!isSmallScreen()) return;
+      if (!event.touches || event.touches.length !== 1) return;
+
+      const touch = event.touches[0];
+      activeTouchId = touch.identifier;
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startScrollLeft = tableWrap.scrollLeft;
+      isHorizontalDrag = false;
+    }, { passive: true });
+
+    tableWrap.addEventListener('touchmove', (event) => {
+      if (!isSmallScreen()) return;
+      if (activeTouchId === null || !event.touches) return;
+
+      const touch = Array.from(event.touches).find(t => t.identifier === activeTouchId);
+      if (!touch) return;
+
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
+
+      if (!isHorizontalDrag && (Math.abs(deltaX) > threshold || Math.abs(deltaY) > threshold)) {
+        isHorizontalDrag = Math.abs(deltaX) > Math.abs(deltaY);
+      }
+
+      if (!isHorizontalDrag) return;
+
+      tableWrap.scrollLeft = startScrollLeft - deltaX;
+      event.preventDefault();
+    }, { passive: false });
+
+    const resetTouch = () => {
+      activeTouchId = null;
+      isHorizontalDrag = false;
+    };
+
+    tableWrap.addEventListener('touchend', resetTouch, { passive: true });
+    tableWrap.addEventListener('touchcancel', resetTouch, { passive: true });
   }
 
   function getUserStateStorageKey(userId) {
@@ -2715,6 +2767,7 @@
   switchView('timetable');
   setNowLineTheme('cyan');
   startNowLine();
+  initHorizontalPanAssist();
   initTimetableSwipeHint();
   setAuthMode('signin');
   window.addEventListener('beforeunload', saveStateForCurrentUser);
