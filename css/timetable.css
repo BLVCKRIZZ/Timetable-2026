@@ -1191,6 +1191,18 @@
       overscroll-behavior-x: contain;
     }
 
+    #timetable input,
+    #timetable textarea {
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    #timetable input:focus,
+    #timetable textarea:focus {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
     th:first-child,
     td:first-child {
       position: static;

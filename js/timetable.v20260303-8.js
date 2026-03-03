@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260303-8';
+  const APP_BUILD_VERSION = '20260303-9';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -688,12 +688,18 @@
     const tableWrap = document.querySelector('.table-wrap');
     if (!tableWrap) return;
 
+    const userAgent = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isWebKit = /WebKit/.test(userAgent) && !/CriOS|FxiOS|EdgiOS/.test(userAgent);
+    const isSafariLike = isIOS && isWebKit;
+
     let startX = 0;
     let startY = 0;
     let startScrollLeft = 0;
     let activeTouchId = null;
     let isHorizontalDrag = false;
-    const threshold = 10;
+    const threshold = 6;
 
     tableWrap.addEventListener('touchstart', (event) => {
       if (!isSmallScreen()) return;
@@ -718,10 +724,17 @@
       const deltaY = touch.clientY - startY;
 
       if (!isHorizontalDrag && (Math.abs(deltaX) > threshold || Math.abs(deltaY) > threshold)) {
-        isHorizontalDrag = Math.abs(deltaX) > Math.abs(deltaY);
+        isHorizontalDrag = Math.abs(deltaX) > (Math.abs(deltaY) * 0.7);
       }
 
       if (!isHorizontalDrag) return;
+
+      if (isSafariLike) {
+        const activeElement = document.activeElement;
+        if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+          activeElement.blur();
+        }
+      }
 
       tableWrap.scrollLeft = startScrollLeft - deltaX;
       event.preventDefault();
@@ -734,6 +747,10 @@
 
     tableWrap.addEventListener('touchend', resetTouch, { passive: true });
     tableWrap.addEventListener('touchcancel', resetTouch, { passive: true });
+
+    if (isSafariLike) {
+      tableWrap.style.webkitOverflowScrolling = 'touch';
+    }
   }
 
   function getUserStateStorageKey(userId) {
