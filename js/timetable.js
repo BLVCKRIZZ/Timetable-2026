@@ -559,6 +559,84 @@
     return null;
   }
 
+  async function exportTimetablePdf() {
+    const exportBtn = document.getElementById('export-pdf-btn');
+    const timetable = document.getElementById('timetable');
+    if (!timetable) return;
+
+    if (exportBtn) {
+      exportBtn.disabled = true;
+      exportBtn.textContent = 'Exporting...';
+    }
+
+    try {
+      if (!window.html2pdf) {
+        throw new Error('PDF library unavailable');
+      }
+
+      const tableClone = timetable.cloneNode(true);
+      tableClone.removeAttribute('id');
+      tableClone.style.width = '100%';
+
+      tableClone.querySelectorAll('input, textarea').forEach((field) => {
+        const value = (field.value || '').trim();
+        const fallback = (field.placeholder || '').trim();
+        const text = value || fallback;
+        const replacement = document.createElement('div');
+        replacement.textContent = text;
+        replacement.style.padding = '8px 10px';
+        replacement.style.minHeight = '32px';
+        replacement.style.fontSize = '11px';
+        replacement.style.lineHeight = '1.25';
+        replacement.style.wordBreak = 'break-word';
+        replacement.style.whiteSpace = 'pre-wrap';
+        field.replaceWith(replacement);
+      });
+
+      const exportRoot = document.createElement('div');
+      exportRoot.style.position = 'fixed';
+      exportRoot.style.left = '-10000px';
+      exportRoot.style.top = '0';
+      exportRoot.style.width = '1600px';
+      exportRoot.style.background = '#fff';
+      exportRoot.style.color = '#111';
+      exportRoot.style.padding = '16px';
+
+      const title = document.getElementById('main-title')?.value?.trim() || 'Timetable';
+      const subtitle = document.querySelector('.subtitle-input')?.value?.trim() || '';
+      const weekLabel = document.getElementById('week-label')?.textContent?.trim() || '';
+
+      const heading = document.createElement('div');
+      heading.innerHTML = `<div style="font-size:24px;font-weight:700;margin-bottom:4px;">${title}</div><div style="font-size:12px;color:#444;margin-bottom:4px;">${subtitle}</div><div style="font-size:11px;color:#666;margin-bottom:12px;">${weekLabel}</div>`;
+
+      exportRoot.appendChild(heading);
+      exportRoot.appendChild(tableClone);
+      document.body.appendChild(exportRoot);
+
+      const safeName = title.replace(/[^a-z0-9-_ ]/gi, '').trim().replace(/\s+/g, '_') || 'timetable';
+
+      await window.html2pdf()
+        .set({
+          margin: [8, 8, 8, 8],
+          filename: `${safeName}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        })
+        .from(exportRoot)
+        .save();
+
+      document.body.removeChild(exportRoot);
+    } catch (error) {
+      alert('Unable to export PDF right now. Please try again.');
+    } finally {
+      if (exportBtn) {
+        exportBtn.disabled = false;
+        exportBtn.textContent = 'Export PDF';
+      }
+    }
+  }
+
   function initTimetableSwipeHint() {
     const swipeHint = document.getElementById('timetable-swipe-hint');
     const tableWrap = document.querySelector('.table-wrap');
