@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Timetable</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/timetable.css?v=20260303-9f">
+<link rel="stylesheet" href="css/timetable.css?v=20260303-9h">
 </head>
 <body>
 
@@ -138,6 +138,18 @@
       <button class="btn small view-toggle active" id="timetable-view-btn" onclick="switchView('timetable')">Timetable</button>
       <button class="btn small view-toggle" id="calendar-view-btn" onclick="switchView('calendar')">Calendar</button>
     </div>
+    <div class="toolbar-group compact-controls">
+      <select id="scope-select" class="toolbar-select" onchange="onTimetableScopeChange(this.value)">
+        <option value="week">Week View</option>
+        <option value="day">Day View</option>
+      </select>
+      <select id="focus-day-select" class="toolbar-select" onchange="onFocusDayChange(this.value)"></select>
+      <select id="zoom-level-select" class="toolbar-select" onchange="onTimetableZoomChange(this.value)">
+        <option value="compact">Zoom Out</option>
+        <option value="default">Zoom 100%</option>
+        <option value="large">Zoom In</option>
+      </select>
+    </div>
     <div class="toolbar-group">
       <button class="btn small" id="prev-week-btn" onclick="changeWeek(-1)">← Prev Week</button>
       <button class="btn small" onclick="goToCurrentWeek()">Today</button>
@@ -198,7 +210,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <div id="build-badge" class="build-badge" aria-live="polite"></div>
-<script src="js/timetable.v20260303-9.js?b=20260303-9g"></script>
+<script src="js/timetable.v20260303-9.js?b=20260303-9h"></script>
 </body>
 </html>
 

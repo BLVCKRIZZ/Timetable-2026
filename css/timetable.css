@@ -360,6 +360,14 @@
     flex-wrap: wrap;
   }
 
+  .toolbar-group.compact-controls {
+    gap: 6px;
+  }
+
+  #focus-day-select {
+    display: none;
+  }
+
   .toolbar-select {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -1070,6 +1078,14 @@
       min-width: 980px;
     }
 
+    body.table-zoom-compact #timetable {
+      min-width: 760px;
+    }
+
+    body.table-zoom-large #timetable {
+      min-width: 1120px;
+    }
+
     .build-badge {
       right: 8px;
       bottom: 8px;
@@ -1249,6 +1265,22 @@
       min-height: 56px;
     }
 
+    body.table-zoom-compact td {
+      min-width: 94px;
+    }
+
+    body.table-zoom-compact td:first-child {
+      min-width: 74px;
+    }
+
+    body.table-zoom-large td {
+      min-width: 132px;
+    }
+
+    body.table-zoom-large td:first-child {
+      min-width: 100px;
+    }
+
     td:first-child input,
     th:first-child input {
       padding-left: 12px;
@@ -1264,6 +1296,14 @@
   @media (max-width: 380px) {
     #timetable {
       min-width: 900px;
+    }
+
+    body.table-zoom-compact #timetable {
+      min-width: 700px;
+    }
+
+    body.table-zoom-large #timetable {
+      min-width: 1020px;
     }
 
     body {
@@ -1336,8 +1376,24 @@
       min-width: 106px;
     }
 
+    body.table-zoom-compact td {
+      min-width: 88px;
+    }
+
+    body.table-zoom-large td {
+      min-width: 124px;
+    }
+
     td:first-child {
       min-width: 84px;
+    }
+
+    body.table-zoom-compact td:first-child {
+      min-width: 72px;
+    }
+
+    body.table-zoom-large td:first-child {
+      min-width: 96px;
     }
 
     th input,
