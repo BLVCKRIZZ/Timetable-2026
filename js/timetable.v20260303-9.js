@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260303-9b';
+  const APP_BUILD_VERSION = '20260303-9d';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -492,6 +492,10 @@
 
   function syncEditModeWithCustomizePanel() {
     setEditMode(isAdmin && isCustomizePanelOpen());
+  }
+
+  function isTableEditEnabled() {
+    return isAdmin && isCustomizePanelOpen();
   }
 
   function toggleSettingsPanel() {
@@ -1279,6 +1283,7 @@
       inp.readOnly = true;
       inp.tabIndex = -1;
     }
+    inp.disabled = !isTableEditEnabled();
     inp.addEventListener('input', () => applyEventChip(inp));
     inp.addEventListener('focus', () => selectEditableCell(inp));
     inp.addEventListener('click', (event) => event.stopPropagation());
@@ -1309,6 +1314,7 @@
     ta.value = inp.value;
     ta.rows = 3;
     ta.spellcheck = false;
+    ta.disabled = !isTableEditEnabled();
     ta.addEventListener('input', () => applyEventChip(ta));
     ta.addEventListener('focus', () => selectEditableCell(ta));
     td.replaceChild(ta, inp);
@@ -1319,6 +1325,7 @@
       newInp.type = 'text';
       newInp.value = ta.value;
       newInp.spellcheck = false;
+      newInp.disabled = !isTableEditEnabled();
       newInp.addEventListener('input', () => applyEventChip(newInp));
       newInp.addEventListener('focus', () => selectEditableCell(newInp));
       newInp.addEventListener('change', () => {
@@ -1352,6 +1359,7 @@
     delBtn.className = 'row-del';
     delBtn.textContent = '×';
     delBtn.title = 'Delete row';
+    delBtn.disabled = !isTableEditEnabled();
     delBtn.onclick = () => {
       if (!isAdmin) return;
       pushHistorySnapshot();
@@ -1401,6 +1409,7 @@
     inp.type = 'text';
     inp.value = 'New Column';
     inp.spellcheck = false;
+    inp.disabled = !isTableEditEnabled();
     th.appendChild(inp);
     headerRow.insertBefore(th, actionTh);
 
@@ -2233,6 +2242,7 @@
     renderCalendar();
     updateTodayHighlight();
     updateNowLine();
+    syncEditModeWithCustomizePanel();
   }
 
   function setNowLineTheme(theme) {
