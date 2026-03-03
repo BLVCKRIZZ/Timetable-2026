@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260303-6';
+  const APP_BUILD_VERSION = '20260303-7';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -682,70 +682,6 @@
     const autoDismissTimer = setTimeout(dismiss, 7000);
     tableWrap.addEventListener('scroll', onTableScroll, { passive: true });
     swipeHint.addEventListener('click', dismiss);
-  }
-
-  function initManualTablePan() {
-    const tableWrap = document.querySelector('.table-wrap');
-    if (!tableWrap) return;
-
-    let activeTouchId = null;
-    let startX = 0;
-    let startY = 0;
-    let startScrollLeft = 0;
-    let dragging = false;
-    let horizontalDrag = false;
-    const dragThreshold = 8;
-
-    const onTouchStart = (event) => {
-      if (!isSmallScreen()) return;
-      if (!event.touches || event.touches.length !== 1) return;
-
-      const touch = event.touches[0];
-      activeTouchId = touch.identifier;
-      startX = touch.clientX;
-      startY = touch.clientY;
-      startScrollLeft = tableWrap.scrollLeft;
-      dragging = false;
-      horizontalDrag = false;
-    };
-
-    const onTouchMove = (event) => {
-      if (!isSmallScreen()) return;
-      if (activeTouchId === null || !event.touches) return;
-
-      const touch = Array.from(event.touches).find((item) => item.identifier === activeTouchId);
-      if (!touch) return;
-
-      const deltaX = touch.clientX - startX;
-      const deltaY = touch.clientY - startY;
-
-      if (!dragging && (Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold)) {
-        dragging = true;
-        horizontalDrag = Math.abs(deltaX) >= Math.abs(deltaY);
-      }
-
-      if (!dragging) return;
-      if (!horizontalDrag) return;
-
-      tableWrap.scrollLeft = startScrollLeft - deltaX;
-      event.preventDefault();
-    };
-
-    const onTouchEnd = (event) => {
-      if (activeTouchId === null || !event.changedTouches) return;
-
-      const touchEnded = Array.from(event.changedTouches).some((item) => item.identifier === activeTouchId);
-      if (!touchEnded) return;
-
-      activeTouchId = null;
-      dragging = false;
-      horizontalDrag = false;
-    };
-
-    tableWrap.addEventListener('touchstart', onTouchStart, { passive: true });
-    tableWrap.addEventListener('touchmove', onTouchMove, { passive: false });
-    tableWrap.addEventListener('touchend', onTouchEnd, { passive: true });
-    tableWrap.addEventListener('touchcancel', onTouchEnd, { passive: true });
   }
 
   function getUserStateStorageKey(userId) {
@@ -2779,7 +2715,6 @@
   switchView('timetable');
   setNowLineTheme('cyan');
   startNowLine();
-  initManualTablePan();
   initTimetableSwipeHint();
   setAuthMode('signin');
   window.addEventListener('beforeunload', saveStateForCurrentUser);
