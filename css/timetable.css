@@ -1220,7 +1220,7 @@
     td input,
     td textarea {
       padding: 12px 10px;
-      font-size: 12px;
+      font-size: 16px;
       min-height: 56px;
     }
 
@@ -1319,7 +1319,7 @@
     td input,
     td textarea {
       padding: 10px 8px;
-      font-size: 11px;
+      font-size: 16px;
     }
 
     td:first-child input,
