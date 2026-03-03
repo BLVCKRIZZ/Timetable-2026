@@ -480,6 +480,14 @@
     background: var(--table-head-bg);
   }
 
+  th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 9;
+    background: var(--table-head-bg);
+    box-shadow: inset -10px 0 14px rgba(255,255,255,0.45);
+  }
+
   th input {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
@@ -1061,6 +1069,17 @@
       min-height: 32px;
     }
 
+    .row-del {
+      width: 32px;
+      height: 32px;
+      font-size: 18px;
+    }
+
+    .color-preset-btn,
+    .theme-preset-btn {
+      min-height: 28px;
+    }
+
     .toolbar-group {
       gap: 6px;
     }
@@ -1135,6 +1154,7 @@
     td textarea {
       padding: 12px 10px;
       font-size: 12px;
+      min-height: 56px;
     }
 
     td:first-child input,
