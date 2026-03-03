@@ -1157,7 +1157,16 @@
     }
 
     .table-wrap {
-      max-height: 64vh;
+      max-height: 72vh;
+      overflow: auto;
+      touch-action: pan-x pan-y;
+    }
+
+    th:first-child,
+    td:first-child {
+      position: static;
+      left: auto;
+      box-shadow: none;
     }
 
     .week-toolbar {
@@ -1250,7 +1259,7 @@
     }
 
     .table-wrap {
-      max-height: 58vh;
+      max-height: 66vh;
     }
 
     td {
