@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Timetable</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/timetable.css?v=20260303-9b">
+<link rel="stylesheet" href="css/timetable.css?v=20260303-9c">
 </head>
 <body>
 
@@ -193,19 +193,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <div id="build-badge" class="build-badge" aria-live="polite"></div>
-<script>
-  (function loadTimetableScript() {
-    var cacheToken = '?b=20260303-9b';
-    var primary = document.createElement('script');
-    primary.src = 'js/timetable.v20260303-9.js' + cacheToken;
-    primary.onerror = function () {
-      var fallback = document.createElement('script');
-      fallback.src = 'js/timetable.v20260303-8.js' + cacheToken;
-      document.body.appendChild(fallback);
-    };
-    document.body.appendChild(primary);
-  })();
-</script>
+<script src="js/timetable.v20260303-9.js?b=20260303-9c"></script>
 </body>
 </html>
 
