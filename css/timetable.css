@@ -908,6 +908,22 @@
     margin-left: auto;
   }
 
+  .build-badge {
+    position: fixed;
+    right: 10px;
+    bottom: 10px;
+    z-index: 2147483647;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    background: rgba(255, 253, 247, 0.94);
+    color: #6f5c46;
+    border-radius: 4px;
+    pointer-events: none;
+  }
+
   .swipe-hint {
     display: none;
     font-size: 10px;
@@ -1025,6 +1041,13 @@
   }
 
   @media (max-width: 720px) {
+    .build-badge {
+      right: 8px;
+      bottom: 8px;
+      font-size: 9px;
+      padding: 5px 7px;
+    }
+
     .swipe-hint {
       display: block;
     }
