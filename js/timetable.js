@@ -60,6 +60,7 @@
   const CUSTOMIZE_LOCKOUT_MS = 60 * 1000;
   const CUSTOMIZE_LOCKOUT_STORAGE_PREFIX = 'customize_unlock_lockout_';
   const TIMETABLE_SWIPE_HINT_STORAGE_KEY = 'timetable_swipe_hint_dismissed';
+  const MOBILE_MANUAL_SCROLL_ONLY = true;
   const RESET_PASSWORD_COOLDOWN_MS = 30 * 1000;
   let resetPasswordBlockedUntil = 0;
   let resetPasswordCooldownTimer = null;
@@ -2245,6 +2246,7 @@
 
   function scrollDayColumnIntoView(dayColumn) {
     if (!isSmallScreen() || !dayColumn) return;
+    if (MOBILE_MANUAL_SCROLL_ONLY) return;
 
     const tableWrap = document.querySelector('.table-wrap');
     const headerCell = document.querySelector(`#header-row th:nth-child(${dayColumn})`);
