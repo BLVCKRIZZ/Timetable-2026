@@ -193,7 +193,18 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <div id="build-badge" class="build-badge" aria-live="polite"></div>
-<script src="js/timetable.v20260303-8.js"></script>
+<script>
+  (function loadTimetableScript() {
+    var primary = document.createElement('script');
+    primary.src = 'js/timetable.v20260303-8.js';
+    primary.onerror = function () {
+      var fallback = document.createElement('script');
+      fallback.src = 'js/timetable.v20260303-7.js';
+      document.body.appendChild(fallback);
+    };
+    document.body.appendChild(primary);
+  })();
+</script>
 </body>
 </html>
 
