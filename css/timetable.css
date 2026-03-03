@@ -1061,7 +1061,7 @@
     }
 
     .settings-panel.open {
-      max-height: 72vh;
+      max-height: 48vh;
     }
 
     .auth-card {
