@@ -684,6 +684,68 @@
     swipeHint.addEventListener('click', dismiss);
   }
 
+  function initManualTablePan() {
+    const tableWrap = document.querySelector('.table-wrap');
+    if (!tableWrap) return;
+
+    let activeTouchId = null;
+    let startX = 0;
+    let startY = 0;
+    let startScrollLeft = 0;
+    let startScrollTop = 0;
+    let dragging = false;
+    const dragThreshold = 8;
+
+    const onTouchStart = (event) => {
+      if (!isSmallScreen()) return;
+      if (!event.touches || event.touches.length !== 1) return;
+
+      const touch = event.touches[0];
+      activeTouchId = touch.identifier;
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startScrollLeft = tableWrap.scrollLeft;
+      startScrollTop = tableWrap.scrollTop;
+      dragging = false;
+    };
+
+    const onTouchMove = (event) => {
+      if (!isSmallScreen()) return;
+      if (activeTouchId === null || !event.touches) return;
+
+      const touch = Array.from(event.touches).find((item) => item.identifier === activeTouchId);
+      if (!touch) return;
+
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
+
+      if (!dragging && (Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold)) {
+        dragging = true;
+      }
+
+      if (!dragging) return;
+
+      tableWrap.scrollLeft = startScrollLeft - deltaX;
+      tableWrap.scrollTop = startScrollTop - deltaY;
+      event.preventDefault();
+    };
+
+    const onTouchEnd = (event) => {
+      if (activeTouchId === null || !event.changedTouches) return;
+
+      const touchEnded = Array.from(event.changedTouches).some((item) => item.identifier === activeTouchId);
+      if (!touchEnded) return;
+
+      activeTouchId = null;
+      dragging = false;
+    };
+
+    tableWrap.addEventListener('touchstart', onTouchStart, { passive: true });
+    tableWrap.addEventListener('touchmove', onTouchMove, { passive: false });
+    tableWrap.addEventListener('touchend', onTouchEnd, { passive: true });
+    tableWrap.addEventListener('touchcancel', onTouchEnd, { passive: true });
+  }
+
   function getUserStateStorageKey(userId) {
     return `timetable_state_${userId}`;
   }
@@ -2715,6 +2777,7 @@
   switchView('timetable');
   setNowLineTheme('cyan');
   startNowLine();
+  initManualTablePan();
   initTimetableSwipeHint();
   setAuthMode('signin');
   window.addEventListener('beforeunload', saveStateForCurrentUser);
