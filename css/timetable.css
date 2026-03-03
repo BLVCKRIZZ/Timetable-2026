@@ -198,6 +198,10 @@
     z-index: 2;
   }
 
+  #simple-mode-toggle-btn {
+    display: none;
+  }
+
   .settings-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1054,6 +1058,14 @@
   }
 
   @media (max-width: 720px) {
+    #simple-mode-toggle-btn {
+      display: inline-block;
+    }
+
+    .settings-panel.simple-mode .settings-card[data-simple="advanced"] {
+      display: none;
+    }
+
     #timetable {
       min-width: 980px;
     }

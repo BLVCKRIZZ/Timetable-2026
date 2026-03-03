@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Timetable</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/timetable.css?v=20260303-9d">
+<link rel="stylesheet" href="css/timetable.css?v=20260303-9f">
 </head>
 <body>
 
@@ -37,6 +37,7 @@
   <div id="settings-panel" class="settings-panel">
     <div class="settings-panel-head">
       <span class="settings-title">Customize</span>
+      <button id="simple-mode-toggle-btn" class="btn small" type="button" onclick="toggleSimpleCustomizeMode()">More Options</button>
       <button class="btn small" type="button" onclick="toggleSettingsPanel()">✕ Close</button>
     </div>
     <div class="settings-grid">
@@ -71,7 +72,7 @@
         <button id="time-preset-full" class="btn small" data-admin-action onclick="applyTimePreset('full')" title="Show the full 24-hour day">Preset: 24 Hours</button>
       </div>
 
-      <div class="settings-card">
+      <div class="settings-card" data-simple="advanced">
         <span class="settings-title">Manage Data</span>
         <button id="export-pdf-btn" class="btn small" data-admin-action onclick="exportTimetablePdf()">Export PDF</button>
         <button class="btn small" data-admin-action onclick="clearDefaultPlaceholders()">Clear Defaults</button>
@@ -79,7 +80,7 @@
         <button class="btn small danger" data-admin-action onclick="clearAllChanges()">Clear All Changes</button>
       </div>
 
-      <div class="settings-card">
+      <div class="settings-card" data-simple="advanced">
         <span class="settings-title">Cell Colors</span>
         <div class="color-tools">
           <input id="cell-color-picker" class="color-picker" type="color" value="#dbeafe" title="Choose color" />
@@ -197,7 +198,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <div id="build-badge" class="build-badge" aria-live="polite"></div>
-<script src="js/timetable.v20260303-9.js?b=20260303-9e"></script>
+<script src="js/timetable.v20260303-9.js?b=20260303-9f"></script>
 </body>
 </html>
 
