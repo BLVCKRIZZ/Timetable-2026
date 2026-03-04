@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#fffdf7">
 <title>Timetable</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/timetable.css?v=20260304-33">
+  <link rel="stylesheet" href="./css/timetable.css?v=20260304-34">
 </head>
 <body>
 
@@ -237,6 +237,10 @@
     <span class="settings-help">Regional time</span>
     <div class="help-time-grid">
       <div class="help-time-row">
+        <span>Choose timezone</span>
+        <select id="help-timezone-select" class="help-time-select" onchange="onHelpTimeZoneChange(this.value)"></select>
+      </div>
+      <div class="help-time-row">
         <span>Your detected timezone</span>
         <span id="help-timezone-label" class="help-time-value">Loading...</span>
       </div>
@@ -249,7 +253,7 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/timetable.js?v=20260304-33"></script>
+  <script src="./js/timetable.js?v=20260304-34"></script>
 </body>
 </html>
 

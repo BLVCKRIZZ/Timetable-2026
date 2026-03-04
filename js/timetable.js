@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-33';
+  const APP_BUILD_VERSION = '20260304-34';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -63,6 +63,7 @@
   const CUSTOMIZE_LOCKOUT_STORAGE_PREFIX = 'customize_unlock_lockout_';
   const SIMPLE_CUSTOMIZE_MODE_STORAGE_KEY = 'simple_customize_mode';
   const CUSTOMIZE_TAB_STORAGE_KEY = 'customize_active_tab';
+  const TIMEZONE_STORAGE_KEY = 'timetable_selected_timezone';
   const TIMETABLE_SCOPE_STORAGE_KEY = 'timetable_scope_mode';
   const TIMETABLE_SWIPE_HINT_STORAGE_KEY = 'timetable_swipe_hint_dismissed';
   const MOBILE_MANUAL_SCROLL_ONLY = true;
@@ -81,6 +82,7 @@
   let calendarCollapsedMobile = true;
   let actionDialogResolver = null;
   let helpRegionalTimeTimer = null;
+  let selectedTimeZone = '';
   let columnThemePresetIndices = {};
   const DEFAULT_COLOR_PRESETS = ['#dbeafe', '#e9d5ff', '#dcfce7', '#fee2e2', '#fef3c7', '#cffafe', '#fce7f3', '#e5e7eb'];
   let colorPresets = [...DEFAULT_COLOR_PRESETS];
@@ -856,25 +858,154 @@
     initHelpRegionalTime();
   }
 
+  function getDetectedTimeZone() {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  }
+
+  function isValidTimeZone(timeZone) {
+    if (!timeZone) return false;
+    try {
+      new Intl.DateTimeFormat(undefined, { timeZone });
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function getStoredTimeZonePreference() {
+    try {
+      const raw = localStorage.getItem(TIMEZONE_STORAGE_KEY);
+      if (!raw) return '';
+      return isValidTimeZone(raw) ? raw : '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function getActiveTimeZone() {
+    return selectedTimeZone || getDetectedTimeZone();
+  }
+
+  function getNowInActiveTimeZone() {
+    const timeZone = getActiveTimeZone();
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).formatToParts(new Date());
+
+    const partMap = {};
+    parts.forEach((part) => {
+      if (part.type !== 'literal') {
+        partMap[part.type] = part.value;
+      }
+    });
+
+    return new Date(
+      Number(partMap.year),
+      Number(partMap.month) - 1,
+      Number(partMap.day),
+      Number(partMap.hour),
+      Number(partMap.minute),
+      Number(partMap.second)
+    );
+  }
+
+  function getTimeZoneOptionList() {
+    const detected = getDetectedTimeZone();
+    const fallbackZones = [
+      'UTC', 'Africa/Johannesburg', 'Europe/London', 'Europe/Paris',
+      'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+      'America/Sao_Paulo', 'Asia/Dubai', 'Asia/Kolkata', 'Asia/Bangkok',
+      'Asia/Singapore', 'Asia/Tokyo', 'Australia/Sydney', 'Pacific/Auckland'
+    ];
+
+    let zones = [];
+    if (typeof Intl.supportedValuesOf === 'function') {
+      zones = Intl.supportedValuesOf('timeZone');
+    }
+
+    const merged = [detected, ...fallbackZones, ...zones].filter(isValidTimeZone);
+    return Array.from(new Set(merged));
+  }
+
+  function buildHelpTimeZoneSelect() {
+    const select = document.getElementById('help-timezone-select');
+    if (!select) return;
+
+    const zones = getTimeZoneOptionList();
+    select.innerHTML = '';
+
+    const autoOption = document.createElement('option');
+    autoOption.value = '';
+    autoOption.textContent = `Auto (${getDetectedTimeZone()})`;
+    select.appendChild(autoOption);
+
+    zones.forEach((zone) => {
+      const option = document.createElement('option');
+      option.value = zone;
+      option.textContent = zone;
+      select.appendChild(option);
+    });
+  }
+
+  function setSelectedTimeZone(timeZone, options = {}) {
+    const { save = true } = options;
+    selectedTimeZone = isValidTimeZone(timeZone) ? timeZone : '';
+
+    const select = document.getElementById('help-timezone-select');
+    if (select) {
+      select.value = selectedTimeZone;
+    }
+
+    if (save) {
+      try {
+        if (selectedTimeZone) {
+          localStorage.setItem(TIMEZONE_STORAGE_KEY, selectedTimeZone);
+        } else {
+          localStorage.removeItem(TIMEZONE_STORAGE_KEY);
+        }
+      } catch (error) {
+        // ignore storage errors
+      }
+    }
+
+    updateHelpRegionalTime();
+    updateTodayHighlight();
+    updateNowLine();
+    renderCalendar();
+  }
+
+  function onHelpTimeZoneChange(value) {
+    setSelectedTimeZone(value);
+  }
+
   function updateHelpRegionalTime() {
     const timezoneLabel = document.getElementById('help-timezone-label');
     const localTimeLabel = document.getElementById('help-local-time-label');
     if (!timezoneLabel || !localTimeLabel) return;
 
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local timezone';
+    const timezone = getActiveTimeZone();
     timezoneLabel.textContent = timezone;
 
-    const now = new Date();
+    const now = getNowInActiveTimeZone();
     localTimeLabel.textContent = now.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
       hour12: true,
-      timeZone: timezone
+      timeZone: getDetectedTimeZone()
     });
   }
 
   function initHelpRegionalTime() {
+    buildHelpTimeZoneSelect();
+    setSelectedTimeZone(getStoredTimeZonePreference(), { save: false });
     updateHelpRegionalTime();
 
     if (helpRegionalTimeTimer) {
@@ -1041,7 +1172,7 @@
   function quickAddEvent() {
     closeQuickAddActions();
     if (activeView === 'calendar') {
-      const date = new Date();
+      const date = getNowInActiveTimeZone();
       addCalendarEvent(getIsoDateKey(date));
       showToast('Event editor opened');
       return;
@@ -3390,7 +3521,7 @@
 
     const daysInMonth = monthEnd.getDate();
     const totalCells = Math.ceil((startDay + daysInMonth) / 7) * 7;
-    const todayKey = getIsoDateKey(new Date());
+    const todayKey = getIsoDateKey(getNowInActiveTimeZone());
 
     const visibleHolidayCount = holidayList.filter(item => {
       if (!item?.date) return false;
@@ -3700,7 +3831,7 @@
   }
 
   function getDayColumnForDisplayedWeek() {
-    const now = new Date();
+    const now = getNowInActiveTimeZone();
     const viewDate = new Date(now);
     viewDate.setDate(now.getDate() + (weekOffset * 7));
     const weekMonday = getMondayOfWeek(viewDate);
@@ -3788,7 +3919,7 @@
       return;
     }
 
-    const now = new Date();
+    const now = getNowInActiveTimeZone();
     const currentMinutes = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
     const visibleStart = timeSettings.startMinute;
     const visibleEnd = timeSettings.fullDay ? (24 * 60) : timeSettings.endMinute;

@@ -320,6 +320,22 @@
     font-weight: 600;
   }
 
+  .help-time-select {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    background: white;
+    color: var(--ink);
+    outline: none;
+    width: 100%;
+  }
+
+  .help-time-select:focus {
+    border-color: var(--ui-accent);
+  }
+
   body.help-open {
     overflow: hidden;
   }
