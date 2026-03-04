@@ -5,24 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Timetable</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/timetable.css?v=20260304-12">
+<link rel="stylesheet" href="css/timetable.css?v=20260304-13">
 </head>
 <body>
 
 <div id="app-lock" class="auth-gate">
   <div class="auth-card">
-    <span class="label">Welcome</span>
-    <h1 id="app-auth-title" class="auth-title">Sign in to open your timetable</h1>
+    <h1 class="auth-app-name">Timetable</h1>
+    <p class="auth-description">Preview your weekly planner now, then sign in to save and customize.</p>
+    <h2 id="app-auth-title" class="auth-title">Sign in</h2>
     <input id="app-email" type="email" placeholder="Email" spellcheck="false" />
     <input id="app-password" type="password" placeholder="Password" spellcheck="false" />
     <input id="app-confirm-password" type="password" placeholder="Confirm password (for sign up)" spellcheck="false" />
     <button id="signin-btn" class="btn" onclick="appLogin()">Sign In</button>
     <button id="signup-btn" class="btn" onclick="appSignUp()">Create Account</button>
-    <span id="app-login-status" class="auth-status">Login required before using this app</span>
+    <span id="app-login-status" class="auth-status"></span>
   </div>
 </div>
 
-<div id="app-shell" class="page app-hidden">
+<div id="app-shell" class="page">
   <div class="header">
     <div class="title-area">
       <span class="label">Timetable</span>
@@ -192,6 +193,7 @@
         <div class="calendar-head">
           <button class="btn small" id="prev-month-btn" onclick="changeMonth(-1)">← Prev Month</button>
           <div id="calendar-title" class="calendar-title">Calendar</div>
+          <button class="btn small" id="calendar-collapse-btn" type="button" onclick="toggleCalendarCollapse()">Expand Calendar</button>
           <button class="btn small" id="next-month-btn" onclick="changeMonth(1)">Next Month →</button>
         </div>
         <div id="calendar-grid" class="calendar-grid"></div>
@@ -208,6 +210,26 @@
   </div>
 </div>
 
+<button id="quick-add-fab" class="quick-add-fab" type="button" aria-label="Quick add" onclick="toggleQuickAddActions()">+</button>
+<div id="quick-add-actions" class="quick-add-actions" aria-hidden="true">
+  <button class="btn" type="button" onclick="quickAddColumn()">+ Column</button>
+  <button class="btn" type="button" onclick="quickAddEvent()">+ Event</button>
+</div>
+
+<div id="cell-edit-sheet" class="cell-edit-sheet" aria-hidden="true">
+  <div class="cell-edit-card">
+    <span class="settings-title">Edit Cell</span>
+    <textarea id="cell-edit-input" rows="3" spellcheck="false" placeholder="Type event..."></textarea>
+    <div class="cell-edit-actions">
+      <button class="btn small" type="button" onclick="saveCellEditSheet()">Save</button>
+      <button class="btn small" type="button" onclick="clearCellEditSheet()">Clear</button>
+      <button class="btn small" type="button" onclick="closeCellEditSheet()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="true"></div>
+
 <div class="mobile-week-nav" aria-label="Week navigation">
   <button class="btn small" type="button" onclick="changeWeek(-1)">← Prev</button>
   <button class="btn small" type="button" onclick="goToCurrentWeek()">Today</button>
@@ -217,7 +239,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <div id="build-badge" class="build-badge" aria-live="polite"></div>
-<script src="js/timetable.v20260303-9.js?b=20260304-12"></script>
+<script src="js/timetable.v20260303-9.js?b=20260304-13"></script>
 </body>
 </html>
 

@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-12';
+  const APP_BUILD_VERSION = '20260304-13';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -73,6 +73,11 @@
   let calendarEventEditorState = null;
   let activeCustomizeTab = 'layout';
   let showCustomizeAdvanced = false;
+  let activeCellEditorInput = null;
+  let touchNavStartX = 0;
+  let touchNavStartY = 0;
+  let touchNavTracking = false;
+  let calendarCollapsedMobile = true;
   let columnThemePresetIndices = {};
   const DEFAULT_COLOR_PRESETS = ['#dbeafe', '#e9d5ff', '#dcfce7', '#fee2e2', '#fef3c7', '#cffafe', '#fce7f3', '#e5e7eb'];
   let colorPresets = [...DEFAULT_COLOR_PRESETS];
@@ -841,6 +846,124 @@
     badge.textContent = `Build ${APP_BUILD_VERSION}`;
   }
 
+  function showToast(message) {
+    const toastRoot = document.getElementById('toast-root');
+    if (!toastRoot || !message) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'toast-item';
+    toast.textContent = message;
+    toastRoot.appendChild(toast);
+
+    window.setTimeout(() => {
+      toast.remove();
+    }, 2200);
+  }
+
+  function toggleQuickAddActions() {
+    const quickAdd = document.getElementById('quick-add-actions');
+    if (!quickAdd) return;
+    const next = !quickAdd.classList.contains('open');
+    quickAdd.classList.toggle('open', next);
+    quickAdd.setAttribute('aria-hidden', next ? 'false' : 'true');
+  }
+
+  function closeQuickAddActions() {
+    const quickAdd = document.getElementById('quick-add-actions');
+    if (!quickAdd) return;
+    quickAdd.classList.remove('open');
+    quickAdd.setAttribute('aria-hidden', 'true');
+  }
+
+  function quickAddColumn() {
+    closeQuickAddActions();
+    if (!isAdmin) {
+      showToast('Unlock Customize first');
+      return;
+    }
+    addColumn();
+    showToast('Column added');
+  }
+
+  function quickAddEvent() {
+    closeQuickAddActions();
+    if (activeView === 'calendar') {
+      const date = new Date();
+      addCalendarEvent(getIsoDateKey(date));
+      showToast('Event editor opened');
+      return;
+    }
+    addRow();
+    showToast('Time slot added');
+  }
+
+  function openCellEditSheet(inputElement) {
+    if (!inputElement || !isSmallScreen()) return;
+    const sheet = document.getElementById('cell-edit-sheet');
+    const editInput = document.getElementById('cell-edit-input');
+    if (!sheet || !editInput) return;
+
+    activeCellEditorInput = inputElement;
+    editInput.value = inputElement.value || '';
+    sheet.classList.add('open');
+    sheet.setAttribute('aria-hidden', 'false');
+    editInput.focus();
+  }
+
+  function closeCellEditSheet() {
+    const sheet = document.getElementById('cell-edit-sheet');
+    if (!sheet) return;
+    sheet.classList.remove('open');
+    sheet.setAttribute('aria-hidden', 'true');
+    activeCellEditorInput = null;
+  }
+
+  function saveCellEditSheet() {
+    if (!activeCellEditorInput) {
+      closeCellEditSheet();
+      return;
+    }
+
+    const editInput = document.getElementById('cell-edit-input');
+    const nextValue = (editInput?.value || '').trim();
+    pushHistorySnapshot();
+    activeCellEditorInput.value = nextValue;
+    applyEventChip(activeCellEditorInput);
+    updateNowLine();
+    closeCellEditSheet();
+    showToast('Cell updated');
+  }
+
+  function clearCellEditSheet() {
+    const editInput = document.getElementById('cell-edit-input');
+    if (editInput) editInput.value = '';
+  }
+
+  function toggleCalendarCollapse() {
+    const panel = document.getElementById('calendar-panel');
+    const button = document.getElementById('calendar-collapse-btn');
+    if (!panel || !button || !isSmallScreen()) return;
+
+    calendarCollapsedMobile = !panel.classList.contains('calendar-collapsed');
+    panel.classList.toggle('calendar-collapsed', calendarCollapsedMobile);
+    button.textContent = calendarCollapsedMobile ? 'Expand Calendar' : 'Collapse Calendar';
+  }
+
+  function setCalendarCollapsedForViewport() {
+    const panel = document.getElementById('calendar-panel');
+    const button = document.getElementById('calendar-collapse-btn');
+    if (!panel || !button) return;
+
+    if (!isSmallScreen()) {
+      panel.classList.remove('calendar-collapsed');
+      button.textContent = 'Expand Calendar';
+      return;
+    }
+
+    panel.classList.toggle('calendar-collapsed', calendarCollapsedMobile);
+    button.textContent = calendarCollapsedMobile ? 'Expand Calendar' : 'Collapse Calendar';
+  }
+
   async function exportTimetablePdf() {
     const exportBtn = document.getElementById('export-pdf-btn');
     const timetable = document.getElementById('timetable');
@@ -910,7 +1033,7 @@
 
       document.body.removeChild(exportRoot);
     } catch (error) {
-      alert('Unable to export PDF right now. Please try again.');
+      showToast('Unable to export PDF right now');
     } finally {
       if (exportBtn) {
         exportBtn.disabled = false;
@@ -1367,6 +1490,7 @@
         appStatus.style.color = '#888';
       }
       ensureRuntimeLogoutButton();
+      showToast('Signed out');
       return;
     }
 
@@ -1398,6 +1522,7 @@
         appStatus.style.color = '#888';
       }
       ensureRuntimeLogoutButton();
+      showToast('Signed out');
     });
   }
 
@@ -1409,7 +1534,6 @@
       appStatus.style.color = '#888';
     }
     document.getElementById('app-lock').classList.add('app-hidden');
-    document.getElementById('app-shell').classList.remove('app-hidden');
     ensureRuntimeLogoutButton();
   }
 
@@ -1451,7 +1575,6 @@
       isAppAuthenticated = false;
       isAdmin = false;
       setEditMode(false);
-      document.getElementById('app-shell').classList.add('app-hidden');
       document.getElementById('app-lock').classList.remove('app-hidden');
       ensureRuntimeLogoutButton();
     });
@@ -1469,14 +1592,14 @@
 
     if (customizeUnlockBlockedUntil > now) {
       const secondsRemaining = Math.ceil((customizeUnlockBlockedUntil - now) / 1000);
-      alert(`Too many failed attempts. Try again in ${secondsRemaining}s.`);
+      showToast(`Try again in ${secondsRemaining}s`);
       isAdmin = false;
       setEditMode(false);
       return;
     }
 
     if (!isAppAuthenticated || !currentUserId) {
-      alert('Sign in first to unlock customization.');
+      showToast('Sign in first to unlock customization');
       isAdmin = false;
       setEditMode(false);
       return;
@@ -1484,14 +1607,14 @@
 
     const password = passwordField.value;
     if (!password) {
-      alert('Enter your account password to unlock customization.');
+      showToast('Enter your account password');
       isAdmin = false;
       setEditMode(false);
       return;
     }
 
     if (!supabaseClient) {
-      alert('Password verification is unavailable right now.');
+      showToast('Password verification unavailable');
       isAdmin = false;
       setEditMode(false);
       return;
@@ -1502,7 +1625,7 @@
       const userEmail = userData?.user?.email;
 
       if (userError || !userEmail) {
-        alert('Unable to verify session. Please sign in again.');
+        showToast('Unable to verify session. Sign in again');
         isAdmin = false;
         setEditMode(false);
         return;
@@ -1520,9 +1643,9 @@
           customizeUnlockBlockedUntil = Date.now() + CUSTOMIZE_LOCKOUT_MS;
           customizeFailedAttempts = 0;
           saveCustomizeLockoutUntil(currentUserId, customizeUnlockBlockedUntil);
-          alert('Too many failed attempts. Unlock is temporarily disabled for 60 seconds.');
+          showToast('Unlock disabled for 60 seconds');
         } else {
-          alert(`Invalid password. ${attemptsLeft} attempt(s) remaining.`);
+          showToast(`Invalid password. ${attemptsLeft} attempt(s) left`);
         }
         passwordField.value = '';
         isAdmin = false;
@@ -1537,7 +1660,7 @@
       syncEditModeWithCustomizePanel();
       passwordField.value = '';
     } catch (error) {
-      alert('Unable to verify password right now.');
+      showToast('Unable to verify password right now');
       isAdmin = false;
       setEditMode(false);
     }
@@ -1575,6 +1698,10 @@
           selectRowByIndex(rowIndex);
           return;
         }
+      }
+
+      if (isSmallScreen() && !isFirst) {
+        openCellEditSheet(inp);
       }
       selectEditableCell(inp);
     });
@@ -1648,6 +1775,9 @@
     renderColumnThemePresets();
     updateTodayHighlight();
     updateNowLine();
+    if (data.length === 0) {
+      showToast('Row added');
+    }
   }
 
   function removeRow() {
@@ -1662,7 +1792,7 @@
 
     const rowNumber = Number(choice);
     if (!Number.isInteger(rowNumber) || rowNumber < 1 || rowNumber > rowCount) {
-      alert('Invalid row number.');
+      showToast('Invalid row number');
       return;
     }
 
@@ -1671,6 +1801,7 @@
     clearRowSelection();
     updateTodayHighlight();
     updateNowLine();
+    showToast('Row removed');
   }
 
   function addColumn() {
@@ -1704,6 +1835,7 @@
     renderColumnThemePresets();
     updateTodayHighlight();
     updateNowLine();
+    showToast('Column added');
   }
 
   function removeColumn() {
@@ -1731,7 +1863,7 @@
     const chosenColumn = Number(choice);
     const selected = removableColumns.find(col => col.number === chosenColumn);
     if (!selected) {
-      alert('Invalid column number.');
+      showToast('Invalid column number');
       return;
     }
 
@@ -1759,6 +1891,7 @@
     applyTimetableColumnVisibility();
     updateTodayHighlight();
     updateNowLine();
+    showToast('Column removed');
   }
 
   function removeSelectedItem() {
@@ -1776,13 +1909,14 @@
       clearRowSelection();
       updateTodayHighlight();
       updateNowLine();
+      showToast('Row removed');
       return;
     }
 
     if (selectedColumnIndex !== null) {
       const minimumColumns = 8;
       if (selectedColumnIndex + 1 <= minimumColumns) {
-        alert('Base columns cannot be removed. Select an added column.');
+        showToast('Base columns cannot be removed');
         return;
       }
 
@@ -1809,6 +1943,7 @@
       applyTimetableColumnVisibility();
       updateTodayHighlight();
       updateNowLine();
+      showToast('Column removed');
       return;
     }
 
@@ -1819,10 +1954,11 @@
       selectedEditableCell.style.removeProperty('--custom-cell-color');
       applyEventChip(selectedEditableCell);
       updateNowLine();
+      showToast('Cell cleared');
       return;
     }
 
-    alert('Select a row, column, or cell first.');
+    showToast('Select a row, column, or cell first');
   }
 
   function clearAll() {
@@ -2186,7 +2322,7 @@
 
     const targets = getColorActionTargets();
     if (!targets.length) {
-      alert('Select a day cell, row, or column (not the Time column).');
+      showToast('Select a day cell, row, or column first');
       return;
     }
 
@@ -2196,6 +2332,7 @@
       el.classList.add('custom-cell-color');
       el.style.setProperty('--custom-cell-color', color);
     });
+    showToast('Color applied');
   }
 
   function getSelectedRowIndexForColoring() {
@@ -2236,7 +2373,7 @@
 
     const rowIndex = getSelectedRowIndexForColoring();
     if (rowIndex === null) {
-      alert('Select a row or a cell in that row first.');
+      showToast('Select a row or a cell in that row first');
       return;
     }
 
@@ -2265,7 +2402,7 @@
 
     const columnIndex = getSelectedColumnIndexForColoring();
     if (columnIndex === null || columnIndex <= 0) {
-      alert('Select a day column or a cell in that column first.');
+      showToast('Select a day column or a cell in that column first');
       return;
     }
 
@@ -2376,7 +2513,7 @@
 
     const targets = getColorActionTargets();
     if (!targets.length) {
-      alert('Select a day cell, row, or column (not the Time column).');
+      showToast('Select a day cell, row, or column first');
       return;
     }
 
@@ -2557,6 +2694,7 @@
     const previous = changeHistory.pop();
     if (!previous) return;
     restoreState(previous);
+    showToast('Undo successful');
   }
 
   function clearDefaultPlaceholders() {
@@ -2598,6 +2736,7 @@
     document.getElementById('calendar-view-btn').classList.toggle('active', activeView === 'calendar');
 
     if (activeView === 'calendar') {
+      setCalendarCollapsedForViewport();
       renderCalendar();
     } else {
       scrollDayColumnIntoView(getVisibleDayColumn());
@@ -2608,6 +2747,53 @@
 
   function isSmallScreen() {
     return window.innerWidth <= 720;
+  }
+
+  function initSwipeNavigation() {
+    const region = document.querySelector('.view-stack');
+    if (!region) return;
+
+    region.addEventListener('touchstart', (event) => {
+      if (!isSmallScreen() || !event.touches || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      touchNavStartX = touch.clientX;
+      touchNavStartY = touch.clientY;
+      touchNavTracking = true;
+    }, { passive: true });
+
+    region.addEventListener('touchend', (event) => {
+      if (!touchNavTracking || !isSmallScreen() || !event.changedTouches || event.changedTouches.length !== 1) {
+        touchNavTracking = false;
+        return;
+      }
+
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - touchNavStartX;
+      const deltaY = touch.clientY - touchNavStartY;
+      touchNavTracking = false;
+
+      if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) {
+        return;
+      }
+
+      if (activeView === 'calendar') {
+        changeMonth(deltaX < 0 ? 1 : -1);
+        return;
+      }
+
+      if (timetableScope === 'day') {
+        const dayColumns = getTimetableDataColumnIndices();
+        const idx = dayColumns.indexOf(focusedDayColumn);
+        if (idx === -1) return;
+        const nextIndex = deltaX < 0 ? Math.min(dayColumns.length - 1, idx + 1) : Math.max(0, idx - 1);
+        if (nextIndex !== idx) {
+          onDayPillTap(dayColumns[nextIndex]);
+        }
+        return;
+      }
+
+      changeWeek(deltaX < 0 ? 1 : -1);
+    }, { passive: true });
   }
 
   function scrollDayColumnIntoView(dayColumn) {
@@ -2721,7 +2907,7 @@
 
     const title = (calendarEventEditorState.title || '').trim();
     if (!title) {
-      alert('Enter an event title.');
+      showToast('Enter an event title');
       return;
     }
 
@@ -3246,6 +3432,16 @@
     applyVisibility();
   }
 
+  function initPreviewShellState() {
+    const appStatus = document.getElementById('app-login-status');
+    if (appStatus) {
+      appStatus.textContent = '';
+      appStatus.style.color = '#888';
+    }
+    document.getElementById('app-shell').classList.remove('app-hidden');
+    document.getElementById('app-lock').classList.remove('app-hidden');
+  }
+
   // Init
   applyThemePreset(0, { pushHistory: false });
   colorPresets = normalizeColorPresets(DEFAULT_COLOR_PRESETS);
@@ -3270,9 +3466,13 @@
   setNowLineTheme('cyan');
   startNowLine();
   initMobileBottomNavAutoHide();
+  initSwipeNavigation();
+  setCalendarCollapsedForViewport();
+  window.addEventListener('resize', setCalendarCollapsedForViewport);
   initHorizontalPanAssist();
   initTimetableSwipeHint();
   setAuthMode('signin');
+  initPreviewShellState();
   window.addEventListener('beforeunload', saveStateForCurrentUser);
   const appEmailInput = document.getElementById('app-email');
   if (appEmailInput) {
