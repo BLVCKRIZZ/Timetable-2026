@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Timetable</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/timetable.css?v=20260304-30">
+  <link rel="stylesheet" href="css/timetable.css?v=20260304-31">
 </head>
 <body>
 
@@ -31,6 +31,7 @@
       <input class="subtitle-input" type="text" placeholder="Add a subtitle or description..." spellcheck="false" />
     </div>
     <div class="controls">
+      <button class="btn" id="help-menu-btn" aria-expanded="false" aria-controls="help-drawer" onclick="toggleHelpMenu()">☰ Guide</button>
       <button class="btn" id="settings-toggle-btn" onclick="toggleSettingsPanel()">⚙ Customize</button>
     </div>
   </div>
@@ -219,6 +220,31 @@
   </div>
 </div>
 
+<div id="help-backdrop" class="help-backdrop" onclick="closeHelpMenu()"></div>
+<aside id="help-drawer" class="help-drawer" aria-hidden="true">
+  <div class="help-drawer-head">
+    <span class="settings-title">Timetable Guide</span>
+    <button class="btn small" type="button" onclick="closeHelpMenu()">✕ Close</button>
+  </div>
+  <div class="help-drawer-content">
+    <span class="settings-help">How to use</span>
+    <ul class="help-list">
+      <li>Use <strong>Prev</strong>, <strong>Today</strong>, <strong>Next</strong> to move between weeks.</li>
+      <li>Use <strong>Now</strong> to jump to the current-time line instantly.</li>
+      <li>Tap a cell to edit it, then type your class, task, or reminder.</li>
+      <li>Use <strong>Customize</strong> for colors, time range, and layout tools.</li>
+    </ul>
+
+    <span class="settings-help">Different ways to use it</span>
+    <ul class="help-list">
+      <li>School or university class timetable</li>
+      <li>Work shift planner for teams</li>
+      <li>Study planner with revision blocks</li>
+      <li>Family routine and chores schedule</li>
+    </ul>
+  </div>
+</aside>
+
 <button id="quick-add-fab" class="quick-add-fab" type="button" aria-label="Quick add" onclick="toggleQuickAddActions()">+</button>
 <div id="quick-add-actions" class="quick-add-actions" aria-hidden="true">
   <button class="btn" type="button" onclick="quickAddColumn()">+ Column</button>
@@ -260,7 +286,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <div id="build-badge" class="build-badge" aria-live="polite"></div>
-  <script src="./js/timetable.js?v=20260304-30"></script>
+  <script src="./js/timetable.js?v=20260304-31"></script>
 </body>
 </html>
 

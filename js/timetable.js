@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-30';
+  const APP_BUILD_VERSION = '20260304-31';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -804,6 +804,53 @@
     if (activeView === 'calendar') {
       renderCalendar();
     }
+  }
+
+  function openHelpMenu() {
+    const drawer = document.getElementById('help-drawer');
+    const backdrop = document.getElementById('help-backdrop');
+    const button = document.getElementById('help-menu-btn');
+    if (!drawer || !backdrop) return;
+
+    drawer.classList.add('open');
+    backdrop.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('help-open');
+    if (button) {
+      button.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  function closeHelpMenu() {
+    const drawer = document.getElementById('help-drawer');
+    const backdrop = document.getElementById('help-backdrop');
+    const button = document.getElementById('help-menu-btn');
+    if (!drawer || !backdrop) return;
+
+    drawer.classList.remove('open');
+    backdrop.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('help-open');
+    if (button) {
+      button.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function toggleHelpMenu() {
+    const drawer = document.getElementById('help-drawer');
+    if (!drawer) return;
+    if (drawer.classList.contains('open')) {
+      closeHelpMenu();
+      return;
+    }
+    openHelpMenu();
+  }
+
+  function initHelpMenu() {
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      closeHelpMenu();
+    });
   }
 
   function setAuthMode(mode) {
@@ -3844,6 +3891,7 @@
   window.addEventListener('resize', setCalendarCollapsedForViewport);
   initHorizontalPanAssist();
   initTimetableSwipeHint();
+  initHelpMenu();
   setAuthMode('signin');
   initPreviewShellState();
   window.addEventListener('beforeunload', saveStateForCurrentUser);
