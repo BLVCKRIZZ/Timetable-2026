@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-4';
+  const APP_BUILD_VERSION = '20260304-5';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -62,7 +62,6 @@
   const CUSTOMIZE_LOCKOUT_STORAGE_PREFIX = 'customize_unlock_lockout_';
   const SIMPLE_CUSTOMIZE_MODE_STORAGE_KEY = 'simple_customize_mode';
   const TIMETABLE_SCOPE_STORAGE_KEY = 'timetable_scope_mode';
-  const TIMETABLE_ZOOM_STORAGE_KEY = 'timetable_zoom_level';
   const TIMETABLE_SWIPE_HINT_STORAGE_KEY = 'timetable_swipe_hint_dismissed';
   const MOBILE_MANUAL_SCROLL_ONLY = true;
   const RESET_PASSWORD_COOLDOWN_MS = 30 * 1000;
@@ -70,7 +69,6 @@
   let resetPasswordCooldownTimer = null;
   let timetableScope = 'week';
   let focusedDayColumn = 2;
-  let timetableZoomLevel = 'default';
   let calendarEventEditorState = null;
   let columnThemePresetIndices = {};
   const DEFAULT_COLOR_PRESETS = ['#dbeafe', '#e9d5ff', '#dcfce7', '#fee2e2', '#fef3c7', '#cffafe', '#fce7f3', '#e5e7eb'];
@@ -585,24 +583,6 @@
     }
   }
 
-  function getStoredTimetableZoomLevel() {
-    try {
-      const rawValue = localStorage.getItem(TIMETABLE_ZOOM_STORAGE_KEY);
-      if (rawValue === 'compact' || rawValue === 'large') return rawValue;
-      return 'default';
-    } catch (error) {
-      return 'default';
-    }
-  }
-
-  function saveTimetableZoomLevel(level) {
-    try {
-      localStorage.setItem(TIMETABLE_ZOOM_STORAGE_KEY, level);
-    } catch (error) {
-      // ignore storage errors
-    }
-  }
-
   function refreshFocusDaySelect() {
     const daySelect = document.getElementById('focus-day-select');
     if (!daySelect) return;
@@ -682,36 +662,8 @@
     updateNowLine();
   }
 
-  function applyTimetableZoomLevel(level, options = {}) {
-    const { persistPreference = true } = options;
-    timetableZoomLevel = level === 'compact' || level === 'large' ? level : 'default';
-
-    document.body.classList.remove('table-zoom-compact', 'table-zoom-large');
-    if (timetableZoomLevel === 'compact') {
-      document.body.classList.add('table-zoom-compact');
-    } else if (timetableZoomLevel === 'large') {
-      document.body.classList.add('table-zoom-large');
-    }
-
-    const zoomSelect = document.getElementById('zoom-level-select');
-    if (zoomSelect) {
-      zoomSelect.value = timetableZoomLevel;
-    }
-
-    updateNowLine();
-
-    if (persistPreference) {
-      saveTimetableZoomLevel(timetableZoomLevel);
-    }
-  }
-
-  function onTimetableZoomChange(value) {
-    applyTimetableZoomLevel(value, { persistPreference: true });
-  }
-
   function initTimetableViewportControls() {
     refreshFocusDaySelect();
-    applyTimetableZoomLevel(getStoredTimetableZoomLevel(), { persistPreference: false });
     setTimetableScope(getStoredTimetableScope(), { persistPreference: false });
   }
 
