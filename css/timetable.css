@@ -581,6 +581,46 @@
     filter: brightness(1.04);
   }
 
+  body.table-zoom-compact #timetable {
+    min-width: 760px !important;
+  }
+
+  body.table-zoom-large #timetable {
+    min-width: 1260px !important;
+  }
+
+  body.table-zoom-compact td {
+    min-width: 94px !important;
+  }
+
+  body.table-zoom-compact td:first-child {
+    min-width: 74px !important;
+  }
+
+  body.table-zoom-large td {
+    min-width: 142px !important;
+  }
+
+  body.table-zoom-large td:first-child {
+    min-width: 108px !important;
+  }
+
+  body.table-zoom-compact th input,
+  body.table-zoom-compact td input,
+  body.table-zoom-compact td textarea {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    min-height: 44px !important;
+  }
+
+  body.table-zoom-large th input,
+  body.table-zoom-large td input,
+  body.table-zoom-large td textarea {
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+    min-height: 68px !important;
+  }
+
   td:first-child input {
     font-weight: 500;
     font-size: 12px;
