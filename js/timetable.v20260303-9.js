@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-13';
+  const APP_BUILD_VERSION = '20260304-14';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -78,6 +78,7 @@
   let touchNavStartY = 0;
   let touchNavTracking = false;
   let calendarCollapsedMobile = true;
+  let actionDialogResolver = null;
   let columnThemePresetIndices = {};
   const DEFAULT_COLOR_PRESETS = ['#dbeafe', '#e9d5ff', '#dcfce7', '#fee2e2', '#fef3c7', '#cffafe', '#fce7f3', '#e5e7eb'];
   let colorPresets = [...DEFAULT_COLOR_PRESETS];
@@ -333,7 +334,7 @@
     const { pushHistory = true } = options;
     const targetColumn = getTargetColumnIndexForPreset();
     if (targetColumn === null) {
-      alert('Select a column header or a cell in that column first.');
+      showToast('Select a column header or a cell in that column first');
       return;
     }
 
@@ -858,6 +859,63 @@
     window.setTimeout(() => {
       toast.remove();
     }, 2200);
+  }
+
+  function resolveActionDialog(confirmed) {
+    const dialog = document.getElementById('action-dialog');
+    const input = document.getElementById('action-dialog-input');
+    if (!dialog) return;
+
+    dialog.classList.remove('open');
+    dialog.setAttribute('aria-hidden', 'true');
+
+    const resolver = actionDialogResolver;
+    actionDialogResolver = null;
+    if (resolver) {
+      resolver({ confirmed, value: input?.value || '' });
+    }
+  }
+
+  function openActionDialog(options = {}) {
+    const {
+      title = 'Confirm action',
+      message = '',
+      confirmText = 'Confirm',
+      cancelText = 'Cancel',
+      showInput = false,
+      inputValue = '',
+      inputPlaceholder = ''
+    } = options;
+
+    const dialog = document.getElementById('action-dialog');
+    const titleEl = document.getElementById('action-dialog-title');
+    const messageEl = document.getElementById('action-dialog-message');
+    const input = document.getElementById('action-dialog-input');
+    const buttons = dialog?.querySelectorAll('.action-dialog-actions .btn');
+
+    if (!dialog || !titleEl || !messageEl || !input || !buttons || buttons.length < 2) {
+      return Promise.resolve({ confirmed: false, value: '' });
+    }
+
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    buttons[0].textContent = confirmText;
+    buttons[1].textContent = cancelText;
+
+    input.classList.toggle('show', showInput);
+    input.value = inputValue;
+    input.placeholder = inputPlaceholder;
+
+    dialog.classList.add('open');
+    dialog.setAttribute('aria-hidden', 'false');
+
+    if (showInput) {
+      setTimeout(() => input.focus(), 0);
+    }
+
+    return new Promise((resolve) => {
+      actionDialogResolver = resolve;
+    });
   }
 
   function toggleQuickAddActions() {
@@ -1780,17 +1838,24 @@
     }
   }
 
-  function removeRow() {
+  async function removeRow() {
     if (!isAdmin) return;
 
     const rows = document.querySelectorAll('#tbody tr');
     if (!rows.length) return;
 
     const rowCount = rows.length;
-    const choice = prompt(`Remove which row? Enter 1-${rowCount} (top to bottom)`, String(rowCount));
-    if (choice === null) return;
+    const { confirmed, value } = await openActionDialog({
+      title: 'Remove row',
+      message: `Enter a row number between 1 and ${rowCount}`,
+      confirmText: 'Remove',
+      showInput: true,
+      inputValue: String(rowCount),
+      inputPlaceholder: `1-${rowCount}`
+    });
+    if (!confirmed) return;
 
-    const rowNumber = Number(choice);
+    const rowNumber = Number(value);
     if (!Number.isInteger(rowNumber) || rowNumber < 1 || rowNumber > rowCount) {
       showToast('Invalid row number');
       return;
@@ -1838,7 +1903,7 @@
     showToast('Column added');
   }
 
-  function removeColumn() {
+  async function removeColumn() {
     if (!isAdmin) return;
 
     const minimumColumns = 8;
@@ -1857,10 +1922,17 @@
 
     const choicesText = removableColumns.map(col => `${col.number}: ${col.label}`).join('\n');
     const defaultChoice = String(removableColumns[removableColumns.length - 1].number);
-    const choice = prompt(`Remove which column?\n${choicesText}\n\nEnter column number:`, defaultChoice);
-    if (choice === null) return;
+    const { confirmed, value } = await openActionDialog({
+      title: 'Remove column',
+      message: `Choose a column number:\n${choicesText}`,
+      confirmText: 'Remove',
+      showInput: true,
+      inputValue: defaultChoice,
+      inputPlaceholder: 'Column number'
+    });
+    if (!confirmed) return;
 
-    const chosenColumn = Number(choice);
+    const chosenColumn = Number(value);
     const selected = removableColumns.find(col => col.number === chosenColumn);
     if (!selected) {
       showToast('Invalid column number');
@@ -1961,14 +2033,20 @@
     showToast('Select a row, column, or cell first');
   }
 
-  function clearAll() {
+  async function clearAll() {
     if (!isAdmin) return;
 
-    if (!confirm('Clear all cell content?')) return;
+    const { confirmed } = await openActionDialog({
+      title: 'Clear content',
+      message: 'Clear all timetable cell content?',
+      confirmText: 'Clear'
+    });
+    if (!confirmed) return;
     pushHistorySnapshot();
     document.querySelectorAll('#tbody input, #tbody textarea').forEach(el => el.value = '');
     document.querySelectorAll('#tbody input, #tbody textarea').forEach(el => applyEventChip(el));
     updateNowLine();
+    showToast('All cell content cleared');
   }
 
   function parseTimeToMinutes(text) {
@@ -2718,12 +2796,18 @@
     updateNowLine();
   }
 
-  function clearAllChanges() {
+  async function clearAllChanges() {
     if (!isAdmin) return;
-    if (!confirm('Clear all changes and reset to default timetable?')) return;
+    const { confirmed } = await openActionDialog({
+      title: 'Reset timetable',
+      message: 'Clear all changes and reset to default timetable?',
+      confirmText: 'Reset'
+    });
+    if (!confirmed) return;
     pushHistorySnapshot();
     changeHistory.length = 0;
     restoreState(INITIAL_STATE);
+    showToast('Timetable reset');
   }
 
   function switchView(viewName) {

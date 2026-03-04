@@ -502,6 +502,58 @@
     max-width: 260px;
   }
 
+  .action-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 125;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.26);
+    padding: 10px;
+  }
+
+  .action-dialog.open {
+    display: flex;
+  }
+
+  .action-dialog-card {
+    width: min(520px, 96vw);
+    border: 1px solid var(--line);
+    border-radius: 14px 14px 0 0;
+    background: var(--paper);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .action-dialog-message {
+    font-size: 11px;
+    line-height: 1.45;
+    color: #6f5c46;
+    white-space: pre-wrap;
+  }
+
+  .action-dialog-input {
+    font-family: 'DM Mono', monospace;
+    border: 1px solid var(--line);
+    padding: 9px 10px;
+    min-height: 42px;
+    display: none;
+  }
+
+  .action-dialog-input.show {
+    display: block;
+  }
+
+  .action-dialog-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
   .toolbar-group {
     display: flex;
     align-items: center;
@@ -1487,6 +1539,10 @@
       bottom: calc(76px + env(safe-area-inset-bottom));
     }
 
+    .action-dialog-card {
+      width: 100%;
+    }
+
     .week-toolbar .toolbar-group {
       width: auto;
       flex-wrap: nowrap;
@@ -1668,6 +1724,14 @@
     #calendar-collapse-btn,
     .cell-edit-sheet {
       display: none !important;
+    }
+
+    .action-dialog {
+      align-items: center;
+    }
+
+    .action-dialog-card {
+      border-radius: 14px;
     }
   }
     }
