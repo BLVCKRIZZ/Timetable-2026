@@ -383,7 +383,7 @@
   /* Table */
   .table-wrap {
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: auto;
     max-height: 76vh;
     padding: 0;
     position: relative;
