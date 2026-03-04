@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260303-9i';
+  const APP_BUILD_VERSION = '20260304-1';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -527,12 +527,16 @@
     const { persistPreference = false } = options;
     const panel = document.getElementById('settings-panel');
     const simpleToggleBtn = document.getElementById('simple-mode-toggle-btn');
+    const simpleModeStatus = document.getElementById('simple-mode-status');
     if (!panel || !simpleToggleBtn) return;
 
     const shouldUseSimpleMode = enabled && isSmallScreen();
     panel.classList.toggle('simple-mode', shouldUseSimpleMode);
     simpleToggleBtn.textContent = shouldUseSimpleMode ? 'More Options' : 'Simple Mode';
     simpleToggleBtn.setAttribute('aria-pressed', shouldUseSimpleMode ? 'true' : 'false');
+    if (simpleModeStatus) {
+      simpleModeStatus.textContent = `Mode: ${shouldUseSimpleMode ? 'Simple' : 'Advanced'}`;
+    }
 
     if (persistPreference) {
       savePreferredSimpleCustomizeMode(Boolean(enabled));
@@ -721,6 +725,9 @@
       setSimpleCustomizeMode(false);
     }
     syncEditModeWithCustomizePanel();
+    if (activeView === 'calendar') {
+      renderCalendar();
+    }
   }
 
   function setAuthMode(mode) {
@@ -2615,6 +2622,10 @@
     return 'event';
   }
 
+  function canEditCalendarEvents() {
+    return isAdmin && isCustomizePanelOpen();
+  }
+
   function getUserEventsForDate(isoKey) {
     if (!Array.isArray(userCalendarEvents[isoKey])) {
       userCalendarEvents[isoKey] = [];
@@ -2623,7 +2634,7 @@
   }
 
   function addCalendarEvent(isoKey) {
-    if (!isAdmin) return;
+    if (!canEditCalendarEvents()) return;
 
     const title = (prompt('Event title (e.g. John birthday):', '') || '').trim();
     if (!title) return;
@@ -2643,7 +2654,7 @@
   }
 
   function editCalendarEvent(isoKey, eventId) {
-    if (!isAdmin) return;
+    if (!canEditCalendarEvents()) return;
     const eventItem = getUserEventsForDate(isoKey).find(item => item.id === eventId);
     if (!eventItem) return;
 
@@ -2660,7 +2671,7 @@
   }
 
   function removeCalendarEvent(isoKey, eventId) {
-    if (!isAdmin) return;
+    if (!canEditCalendarEvents()) return;
     const events = getUserEventsForDate(isoKey);
     const index = events.findIndex(item => item.id === eventId);
     if (index === -1) return;
@@ -2763,24 +2774,87 @@
 
       const inMonth = date.getMonth() === calendarMonthDate.getMonth();
       const isoKey = getIsoDateKey(date);
-      const holidayName = holidayDates.get(isoKey);
+      const holidayNames = holidayDates.get(isoKey) || [];
+      const userEvents = Array.isArray(userCalendarEvents[isoKey]) ? userCalendarEvents[isoKey] : [];
+      const isEditable = canEditCalendarEvents();
 
       const dayCell = document.createElement('div');
       dayCell.className = 'calendar-cell';
       if (!inMonth) dayCell.classList.add('outside');
       if (isoKey === todayKey) dayCell.classList.add('today');
-      if (holidayName) dayCell.classList.add('holiday');
+      if (holidayNames.length) dayCell.classList.add('holiday');
+      if (userEvents.some(eventItem => eventItem.type === 'birthday')) {
+        dayCell.classList.add('birthday-day');
+      }
 
       const dateLabel = document.createElement('div');
       dateLabel.className = 'calendar-date';
       dateLabel.textContent = String(date.getDate());
       dayCell.appendChild(dateLabel);
 
-      if (holidayName) {
+      holidayNames.forEach((holidayName) => {
         const holidayTag = document.createElement('div');
-        holidayTag.className = 'holiday-tag';
+        holidayTag.className = `holiday-tag${isEditable ? '' : ' locked'}`;
         holidayTag.textContent = holidayName;
         dayCell.appendChild(holidayTag);
+      });
+
+      userEvents.forEach((eventItem) => {
+        const eventTag = document.createElement('div');
+        eventTag.className = `user-event-tag${eventItem.type === 'birthday' ? ' birthday' : ''}`;
+
+        const eventText = document.createElement('span');
+        eventText.className = 'user-event-text';
+        eventText.textContent = eventItem.title || 'Event';
+        eventTag.appendChild(eventText);
+
+        if (isEditable) {
+          const eventActions = document.createElement('span');
+          eventActions.className = 'event-actions';
+
+          const editBtn = document.createElement('button');
+          editBtn.className = 'event-icon-btn';
+          editBtn.type = 'button';
+          editBtn.title = 'Edit event';
+          editBtn.textContent = '✎';
+          editBtn.onclick = (event) => {
+            event.stopPropagation();
+            editCalendarEvent(isoKey, eventItem.id);
+          };
+
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'event-icon-btn';
+          removeBtn.type = 'button';
+          removeBtn.title = 'Remove event';
+          removeBtn.textContent = '✕';
+          removeBtn.onclick = (event) => {
+            event.stopPropagation();
+            removeCalendarEvent(isoKey, eventItem.id);
+          };
+
+          eventActions.appendChild(editBtn);
+          eventActions.appendChild(removeBtn);
+          eventTag.appendChild(eventActions);
+        }
+
+        dayCell.appendChild(eventTag);
+      });
+
+      if (inMonth && isEditable) {
+        const tools = document.createElement('div');
+        tools.className = 'calendar-tools';
+
+        const addBtn = document.createElement('button');
+        addBtn.className = 'calendar-add-btn';
+        addBtn.type = 'button';
+        addBtn.textContent = '+ Event';
+        addBtn.onclick = (event) => {
+          event.stopPropagation();
+          addCalendarEvent(isoKey);
+        };
+
+        tools.appendChild(addBtn);
+        dayCell.appendChild(tools);
       }
 
       grid.appendChild(dayCell);

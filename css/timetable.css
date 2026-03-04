@@ -202,6 +202,10 @@
     display: none;
   }
 
+  #simple-mode-status {
+    margin-left: auto;
+  }
+
   .settings-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1244,11 +1248,18 @@
       user-select: text;
     }
 
-    th:first-child,
+    th:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 9;
+      box-shadow: inset -8px 0 10px rgba(255,255,255,0.45);
+    }
+
     td:first-child {
-      position: static;
-      left: auto;
-      box-shadow: none;
+      position: sticky;
+      left: 0;
+      z-index: 7;
+      box-shadow: inset -8px 0 10px rgba(255,255,255,0.45);
     }
 
     .week-toolbar {
