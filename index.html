@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Timetable</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/timetable.css?v=20260304-27">
+  <link rel="stylesheet" href="css/timetable.css?v=20260304-28">
 </head>
 <body>
 
@@ -134,6 +134,10 @@
           <option value="cyan">Live Line: Cyber Cyan</option>
           <option value="violet">Live Line: Electric Violet</option>
         </select>
+        <select id="auto-jump-now" class="toolbar-select" data-admin-action onchange="onAutoJumpNowChange(this.value)">
+          <option value="off">Auto-Jump to Now: Off</option>
+          <option value="on">Auto-Jump to Now: On</option>
+        </select>
       </div>
     </div>
   </div>
@@ -252,7 +256,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <div id="build-badge" class="build-badge" aria-live="polite"></div>
-  <script src="./js/timetable.js?v=20260304-27"></script>
+  <script src="./js/timetable.js?v=20260304-28"></script>
 </body>
 </html>
 

@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-27';
+  const APP_BUILD_VERSION = '20260304-28';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -51,6 +51,7 @@
   let holidayList = [];
   let userCalendarEvents = {};
   let nowLineTheme = 'cyan';
+  let autoJumpToNowOnOpen = false;
   let activeThemePresetIndex = 0;
   let activeCellsPresetIndex = 0;
   let authMode = 'signin';
@@ -120,7 +121,8 @@
     columnThemePresetIndices: {},
     customColors: [],
     userCalendarEvents: {},
-    nowLineTheme: 'cyan'
+    nowLineTheme: 'cyan',
+    autoJumpToNowOnOpen: false
   };
 
   function getColCount() {
@@ -2665,7 +2667,8 @@
       columnThemePresetIndices: { ...columnThemePresetIndices },
       customColors: getCustomColorEntries(),
       userCalendarEvents: cloneUserCalendarEvents(userCalendarEvents),
-      nowLineTheme
+      nowLineTheme,
+      autoJumpToNowOnOpen
     };
   }
 
@@ -2749,6 +2752,7 @@
     applyCustomColors(Array.isArray(state.customColors) ? state.customColors : []);
     userCalendarEvents = cloneUserCalendarEvents(state.userCalendarEvents || {});
     setNowLineTheme(state.nowLineTheme || 'cyan');
+    setAutoJumpToNowOnOpen(state.autoJumpToNowOnOpen === true, { save: false });
     loadPublicHolidays(calendarMonthDate.getFullYear());
     renderCalendar();
     updateTodayHighlight();
@@ -2768,6 +2772,24 @@
     if (themeSelect && themeSelect.value !== nowLineTheme) {
       themeSelect.value = nowLineTheme;
     }
+  }
+
+  function setAutoJumpToNowOnOpen(enabled, options = {}) {
+    const { save = true } = options;
+    autoJumpToNowOnOpen = Boolean(enabled);
+
+    const autoJumpSelect = document.getElementById('auto-jump-now');
+    if (autoJumpSelect) {
+      autoJumpSelect.value = autoJumpToNowOnOpen ? 'on' : 'off';
+    }
+
+    if (save) {
+      saveStateForCurrentUser();
+    }
+  }
+
+  function onAutoJumpNowChange(value) {
+    setAutoJumpToNowOnOpen(value === 'on');
   }
 
   function pushHistorySnapshot() {
@@ -3742,6 +3764,9 @@
   function startNowLine() {
     if (nowLineTimer) clearInterval(nowLineTimer);
     updateNowLine();
+    if (autoJumpToNowOnOpen) {
+      setTimeout(() => scrollNowLineIntoView('smooth'), 120);
+    }
     nowLineTimer = setInterval(updateNowLine, 60 * 1000);
     window.addEventListener('resize', updateNowLine);
     const tableWrap = document.querySelector('.table-wrap');
@@ -3812,6 +3837,7 @@
   renderCalendar();
   switchView('timetable');
   setNowLineTheme('cyan');
+  setAutoJumpToNowOnOpen(false, { save: false });
   startNowLine();
   initMobileBottomNavAutoHide();
   initSwipeNavigation();
