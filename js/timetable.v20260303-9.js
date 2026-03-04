@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-8';
+  const APP_BUILD_VERSION = '20260304-9';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -3216,6 +3216,36 @@
     }
   }
 
+  function initMobileBottomNavAutoHide() {
+    const mobileNav = document.querySelector('.mobile-week-nav');
+    if (!mobileNav) return;
+
+    let lastY = window.scrollY || 0;
+
+    const applyVisibility = () => {
+      if (!isSmallScreen()) {
+        document.body.classList.remove('mobile-nav-hidden');
+        return;
+      }
+
+      const currentY = window.scrollY || 0;
+      const delta = currentY - lastY;
+      const nearTop = currentY < 24;
+
+      if (nearTop || delta < -6) {
+        document.body.classList.remove('mobile-nav-hidden');
+      } else if (delta > 8) {
+        document.body.classList.add('mobile-nav-hidden');
+      }
+
+      lastY = currentY;
+    };
+
+    window.addEventListener('scroll', applyVisibility, { passive: true });
+    window.addEventListener('resize', applyVisibility);
+    applyVisibility();
+  }
+
   // Init
   applyThemePreset(0, { pushHistory: false });
   colorPresets = normalizeColorPresets(DEFAULT_COLOR_PRESETS);
@@ -3239,6 +3269,7 @@
   switchView('timetable');
   setNowLineTheme('cyan');
   startNowLine();
+  initMobileBottomNavAutoHide();
   initHorizontalPanAssist();
   initTimetableSwipeHint();
   setAuthMode('signin');
