@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-17';
+  const APP_BUILD_VERSION = '20260304-18';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -3428,6 +3428,33 @@
     return getDayColumnForDisplayedWeek();
   }
 
+  function getNowLineColumnSpan(tbody) {
+    const firstRow = tbody?.querySelector('tr');
+    if (!firstRow) return null;
+
+    const firstDataColumnIndex = 1;
+    const lastDataColumnIndex = Math.max(firstDataColumnIndex, getColCount() - 1);
+
+    if (timetableScope === 'full') {
+      const startCell = firstRow.children[firstDataColumnIndex];
+      const endCell = firstRow.children[lastDataColumnIndex];
+      if (!startCell || !endCell) return null;
+      return { startCell, endCell };
+    }
+
+    const todayColumn = getDayColumnForDisplayedWeek();
+    if (!todayColumn) return null;
+
+    const todayCell = firstRow.children[todayColumn - 1];
+    if (!todayCell) return null;
+
+    if (window.getComputedStyle(todayCell).display === 'none') {
+      return null;
+    }
+
+    return { startCell: todayCell, endCell: todayCell };
+  }
+
   function updateNowLine() {
     const nowLine = document.getElementById('now-line');
     if (activeView !== 'timetable') {
@@ -3447,13 +3474,11 @@
 
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
-    nowLine.setAttribute('data-time', formatMinutesTo12h(currentMinutes));
     const visibleStart = timeSettings.startMinute;
-    const visibleDuration = timeSettings.fullDay
-      ? 24 * 60
-      : (timeSettings.endMinute - timeSettings.startMinute + timeSettings.intervalMinutes);
+    const visibleEnd = timeSettings.fullDay ? (24 * 60) : timeSettings.endMinute;
+    const visibleDuration = visibleEnd - visibleStart;
 
-    if (currentMinutes < visibleStart || currentMinutes > visibleStart + visibleDuration) {
+    if (visibleDuration <= 0 || currentMinutes < visibleStart || currentMinutes > visibleEnd) {
       nowLine.style.display = 'none';
       return;
     }
@@ -3464,10 +3489,22 @@
       return;
     }
 
-    const dayRatio = (currentMinutes - visibleStart) / visibleDuration;
+    const span = getNowLineColumnSpan(tbody);
+    if (!span) {
+      nowLine.style.display = 'none';
+      return;
+    }
+
+    const dayRatio = Math.max(0, Math.min(1, (currentMinutes - visibleStart) / visibleDuration));
     const top = tbody.offsetTop + (dayRatio * tbody.offsetHeight);
-    const left = 0;
-    const width = tableWrap.scrollWidth;
+    const left = span.startCell.offsetLeft - tableWrap.scrollLeft;
+    const right = (span.endCell.offsetLeft + span.endCell.offsetWidth) - tableWrap.scrollLeft;
+    const width = Math.max(0, right - left);
+
+    if (width <= 0) {
+      nowLine.style.display = 'none';
+      return;
+    }
 
     nowLine.style.top = `${top}px`;
     nowLine.style.left = `${left}px`;
@@ -3475,10 +3512,20 @@
     nowLine.style.display = 'block';
   }
 
+  function scrollNowLineIntoView() {
+    const nowLine = document.getElementById('now-line');
+    const tableWrap = document.querySelector('.table-wrap');
+    if (!nowLine || !tableWrap || nowLine.style.display !== 'block') return;
+
+    const targetTop = Math.max(0, nowLine.offsetTop - (tableWrap.clientHeight * 0.35));
+    tableWrap.scrollTo({ top: targetTop, behavior: 'smooth' });
+  }
+
   function startNowLine() {
     if (nowLineTimer) clearInterval(nowLineTimer);
     updateNowLine();
-    nowLineTimer = setInterval(updateNowLine, 1000);
+    setTimeout(scrollNowLineIntoView, 120);
+    nowLineTimer = setInterval(updateNowLine, 60 * 1000);
     window.addEventListener('resize', updateNowLine);
     const tableWrap = document.querySelector('.table-wrap');
     if (tableWrap) {
