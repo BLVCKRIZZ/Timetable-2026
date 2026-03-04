@@ -377,7 +377,7 @@
   /* Table */
   .table-wrap {
     overflow-x: auto;
-    overflow-y: auto;
+    overflow-y: hidden;
     max-height: 76vh;
     padding: 0;
     position: relative;
@@ -386,7 +386,7 @@
     box-shadow: inset 0 0 0 1px rgba(217, 208, 188, 0.45);
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    touch-action: pan-x pan-y;
+    touch-action: pan-x;
   }
 
   .week-toolbar {
@@ -1588,8 +1588,9 @@
 
     .table-wrap {
       max-height: 72vh;
-      overflow: auto;
-      touch-action: pan-x pan-y;
+      overflow-x: auto;
+      overflow-y: hidden;
+      touch-action: pan-x;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-x: contain;
     }
@@ -1719,21 +1720,6 @@
 
     td {
       min-width: 106px;
-
-  @media (min-width: 721px) {
-    #calendar-collapse-btn,
-    .cell-edit-sheet {
-      display: none !important;
-    }
-
-    .action-dialog {
-      align-items: center;
-    }
-
-    .action-dialog-card {
-      border-radius: 14px;
-    }
-  }
     }
 
     td:first-child {
@@ -1775,10 +1761,26 @@
     }
   }
 
+  @media (min-width: 721px) {
+    #calendar-collapse-btn,
+    .cell-edit-sheet {
+      display: none !important;
+    }
+
+    .action-dialog {
+      align-items: center;
+    }
+
+    .action-dialog-card {
+      border-radius: 14px;
+    }
+  }
+
   @media (hover: none) {
     .table-wrap {
-      overflow: auto;
-      touch-action: pan-x pan-y;
+      overflow-x: auto;
+      overflow-y: hidden;
+      touch-action: pan-x;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-x: contain;
     }
