@@ -916,6 +916,18 @@
     );
   }
 
+  function formatTimeZoneLabel(timeZone) {
+    if (!isValidTimeZone(timeZone)) return 'UTC';
+    if (timeZone === 'Africa/Johannesburg') return 'South Africa (Johannesburg)';
+
+    const [region, city] = String(timeZone).split('/');
+    if (!city) {
+      return String(timeZone).replace(/_/g, ' ');
+    }
+
+    return `${region.replace(/_/g, ' ')} - ${city.replace(/_/g, ' ')}`;
+  }
+
   function getTimeZoneOptionList() {
     const detected = getDetectedTimeZone();
     const fallbackZones = [
@@ -943,13 +955,13 @@
 
     const autoOption = document.createElement('option');
     autoOption.value = '';
-    autoOption.textContent = `Auto (${getDetectedTimeZone()})`;
+    autoOption.textContent = `Auto (${formatTimeZoneLabel(getDetectedTimeZone())})`;
     select.appendChild(autoOption);
 
     zones.forEach((zone) => {
       const option = document.createElement('option');
       option.value = zone;
-      option.textContent = zone;
+      option.textContent = formatTimeZoneLabel(zone);
       select.appendChild(option);
     });
   }
@@ -991,7 +1003,7 @@
     if (!timezoneLabel || !localTimeLabel) return;
 
     const timezone = getActiveTimeZone();
-    timezoneLabel.textContent = timezone;
+    timezoneLabel.textContent = formatTimeZoneLabel(timezone);
 
     const now = getNowInActiveTimeZone();
     localTimeLabel.textContent = now.toLocaleTimeString([], {
