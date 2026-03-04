@@ -1670,6 +1670,8 @@
           return;
         }
 
+        const requiresEmailConfirmation = !data?.session;
+
         if (data?.session) {
           await supabaseClient.auth.signOut();
         }
@@ -1677,8 +1679,14 @@
         setAuthMode('signin');
         document.getElementById('app-password').value = '';
         document.getElementById('app-confirm-password').value = '';
-        appStatus.textContent = 'Account created. Please sign in.';
+        appStatus.textContent = requiresEmailConfirmation
+          ? 'Account created. Check your email (and spam) for a confirmation link, then sign in.'
+          : 'Account created. Please sign in.';
         appStatus.style.color = '#888';
+
+        if (requiresEmailConfirmation) {
+          showToast('Check your email to confirm your account');
+        }
       });
   }
 
