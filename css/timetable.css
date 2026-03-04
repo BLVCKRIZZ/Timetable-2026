@@ -637,6 +637,15 @@
     gap: 6px;
   }
 
+  .guide-hint-btn {
+    opacity: 0.9;
+    font-weight: 600;
+  }
+
+  .guide-hint-btn:hover {
+    opacity: 1;
+  }
+
   #focus-day-select {
     display: none;
   }
