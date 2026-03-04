@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#fffdf7">
 <title>Timetable</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/timetable.css?v=20260304-29">
+  <link rel="stylesheet" href="./css/timetable.css?v=20260304-30">
 </head>
 <body>
 
@@ -144,8 +144,8 @@
       <button class="btn small" onclick="goToCurrentWeek()">Today</button>
       <button class="btn small" id="jump-now-btn" onclick="jumpToCurrentTime()">Now</button>
       <select id="auto-jump-now-quick" class="toolbar-select" data-auto-jump-control onchange="onAutoJumpNowChange(this.value)">
-        <option value="off">Auto Jump Off</option>
-        <option value="on">Auto Jump On</option>
+        <option value="off">Auto: Off</option>
+        <option value="on">Auto: On</option>
       </select>
       <button class="btn small" id="next-week-btn" onclick="changeWeek(1)">Next Week →</button>
     </div>
@@ -201,7 +201,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/timetable.js?v=20260304-29"></script>
+  <script src="./js/timetable.js?v=20260304-30"></script>
 </body>
 </html>
 
