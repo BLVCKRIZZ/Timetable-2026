@@ -621,6 +621,29 @@
     min-height: 68px !important;
   }
 
+  body.table-view-full #timetable {
+    width: 100% !important;
+    min-width: 100% !important;
+    table-layout: fixed;
+  }
+
+  body.table-view-full td {
+    min-width: 74px !important;
+  }
+
+  body.table-view-full td:first-child {
+    min-width: 62px !important;
+  }
+
+  body.table-view-full th input,
+  body.table-view-full td input,
+  body.table-view-full td textarea {
+    font-size: 11px !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    min-height: 40px !important;
+  }
+
   td:first-child input {
     font-weight: 500;
     font-size: 12px;

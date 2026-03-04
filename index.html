@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Timetable</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/timetable.css?v=20260304-3">
+<link rel="stylesheet" href="css/timetable.css?v=20260304-4">
 </head>
 <body>
 
@@ -143,6 +143,7 @@
       <select id="scope-select" class="toolbar-select" onchange="onTimetableScopeChange(this.value)">
         <option value="week">Week View</option>
         <option value="day">Day View</option>
+        <option value="full">Full View</option>
       </select>
       <select id="focus-day-select" class="toolbar-select" onchange="onFocusDayChange(this.value)"></select>
       <select id="zoom-level-select" class="toolbar-select" onchange="onTimetableZoomChange(this.value)">
@@ -211,7 +212,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <div id="build-badge" class="build-badge" aria-live="polite"></div>
-<script src="js/timetable.v20260303-9.js?b=20260304-3"></script>
+<script src="js/timetable.v20260303-9.js?b=20260304-4"></script>
 </body>
 </html>
 

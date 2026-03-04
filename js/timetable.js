@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-3';
+  const APP_BUILD_VERSION = '20260304-4';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -567,7 +567,7 @@
   function getStoredTimetableScope() {
     try {
       const rawValue = localStorage.getItem(TIMETABLE_SCOPE_STORAGE_KEY);
-      if (rawValue === 'day' || rawValue === 'week') {
+      if (rawValue === 'day' || rawValue === 'week' || rawValue === 'full') {
         return rawValue;
       }
       return isSmallScreen() ? 'day' : 'week';
@@ -578,7 +578,8 @@
 
   function saveTimetableScope(scope) {
     try {
-      localStorage.setItem(TIMETABLE_SCOPE_STORAGE_KEY, scope === 'day' ? 'day' : 'week');
+      const normalizedScope = scope === 'day' || scope === 'full' ? scope : 'week';
+      localStorage.setItem(TIMETABLE_SCOPE_STORAGE_KEY, normalizedScope);
     } catch (error) {
       // ignore storage errors
     }
@@ -630,6 +631,8 @@
     if (!headerRow) return;
 
     const showDayOnly = timetableScope === 'day';
+    const isFullView = timetableScope === 'full';
+    document.body.classList.toggle('table-view-full', isFullView);
     const headerCells = Array.from(headerRow.querySelectorAll('th'));
     const visibleHeaderIndex = Math.max(0, focusedDayColumn - 1);
 
@@ -649,7 +652,7 @@
 
   function setTimetableScope(scope, options = {}) {
     const { persistPreference = true } = options;
-    timetableScope = scope === 'day' ? 'day' : 'week';
+    timetableScope = scope === 'day' || scope === 'full' ? scope : 'week';
 
     const scopeSelect = document.getElementById('scope-select');
     if (scopeSelect) {
