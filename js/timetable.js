@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-19';
+  const APP_BUILD_VERSION = '20260304-20';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -471,7 +471,21 @@
       btn.disabled = !enabled;
     });
 
+    const timeGridActionIds = new Set([
+      'time-interval-select',
+      'time-range-mode',
+      'time-start-select',
+      'time-end-select',
+      'time-preset-early',
+      'time-preset-workday',
+      'time-preset-full'
+    ]);
+
     document.querySelectorAll('[data-admin-action]').forEach(btn => {
+      if (timeGridActionIds.has(btn.id)) {
+        btn.disabled = false;
+        return;
+      }
       btn.disabled = !enabled;
     });
 
@@ -2275,8 +2289,6 @@
   }
 
   function onTimeSettingsChange() {
-    if (!isAdmin) return;
-
     const intervalSelect = document.getElementById('time-interval-select');
     const modeSelect = document.getElementById('time-range-mode');
     const startSelect = document.getElementById('time-start-select');
@@ -2294,8 +2306,6 @@
   }
 
   function applyTimePreset(presetName) {
-    if (!isAdmin) return;
-
     let next = null;
 
     if (presetName === 'early') {
