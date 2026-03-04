@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-23';
+  const APP_BUILD_VERSION = '20260304-24';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -2967,25 +2967,122 @@
     return userCalendarEvents[isoKey];
   }
 
+  function isoDateKeyToDate(isoKey) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(isoKey || ''))) {
+      return null;
+    }
+
+    const [year, month, day] = String(isoKey).split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    if (
+      date.getFullYear() !== year
+      || date.getMonth() !== (month - 1)
+      || date.getDate() !== day
+    ) {
+      return null;
+    }
+
+    return date;
+  }
+
+  function normalizeIsoDateForScheduleYear(isoKey, fallbackIsoKey = null) {
+    const parsedDate = isoDateKeyToDate(isoKey);
+    if (parsedDate && parsedDate.getFullYear() === SCHEDULE_YEAR) {
+      return getIsoDateKey(parsedDate);
+    }
+
+    const fallbackDate = isoDateKeyToDate(fallbackIsoKey);
+    if (fallbackDate && fallbackDate.getFullYear() === SCHEDULE_YEAR) {
+      return getIsoDateKey(fallbackDate);
+    }
+
+    return `${SCHEDULE_YEAR}-01-01`;
+  }
+
+  function getDateRangeKeys(startIsoKey, endIsoKey) {
+    const startDate = isoDateKeyToDate(startIsoKey);
+    const endDate = isoDateKeyToDate(endIsoKey);
+    if (!startDate || !endDate) {
+      return [];
+    }
+
+    let rangeStart = startDate;
+    let rangeEnd = endDate;
+    if (rangeEnd < rangeStart) {
+      rangeStart = endDate;
+      rangeEnd = startDate;
+    }
+
+    const keys = [];
+    const cursor = new Date(rangeStart);
+    while (cursor <= rangeEnd) {
+      keys.push(getIsoDateKey(cursor));
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return keys;
+  }
+
+  function findCalendarEventById(eventId) {
+    if (!eventId) return null;
+
+    for (const [isoKey, events] of Object.entries(userCalendarEvents)) {
+      if (!Array.isArray(events)) continue;
+      const index = events.findIndex(item => item.id === eventId);
+      if (index !== -1) {
+        return { isoKey, index, event: events[index] };
+      }
+    }
+
+    return null;
+  }
+
+  function removeEventsByRangeId(rangeId) {
+    if (!rangeId) return;
+
+    Object.keys(userCalendarEvents).forEach((isoKey) => {
+      const events = userCalendarEvents[isoKey];
+      if (!Array.isArray(events)) return;
+
+      const filtered = events.filter(item => item.rangeId !== rangeId);
+      if (filtered.length) {
+        userCalendarEvents[isoKey] = filtered;
+      } else {
+        delete userCalendarEvents[isoKey];
+      }
+    });
+  }
+
   function openCalendarEventEditor(isoKey, eventId = null) {
     if (!canEditCalendarEvents()) return;
 
+    const normalizedIsoKey = normalizeIsoDateForScheduleYear(isoKey, `${SCHEDULE_YEAR}-01-01`);
+
     if (eventId) {
-      const existingEvent = getUserEventsForDate(isoKey).find(item => item.id === eventId);
+      const existingEvent = getUserEventsForDate(normalizedIsoKey).find(item => item.id === eventId)
+        || findCalendarEventById(eventId)?.event;
       if (!existingEvent) return;
 
+      const rangeStart = normalizeIsoDateForScheduleYear(existingEvent.rangeStart || normalizedIsoKey, normalizedIsoKey);
+      const rangeEnd = normalizeIsoDateForScheduleYear(existingEvent.rangeEnd || normalizedIsoKey, normalizedIsoKey);
+
       calendarEventEditorState = {
-        isoKey,
+        isoKey: normalizedIsoKey,
         eventId,
         title: existingEvent.title || '',
-        type: normalizeCalendarEventType(existingEvent.type || 'event')
+        type: normalizeCalendarEventType(existingEvent.type || 'event'),
+        startDate: rangeStart,
+        endDate: rangeEnd,
+        rangeId: existingEvent.rangeId || null
       };
     } else {
       calendarEventEditorState = {
-        isoKey,
+        isoKey: normalizedIsoKey,
         eventId: null,
         title: '',
-        type: 'event'
+        type: 'event',
+        startDate: normalizedIsoKey,
+        endDate: normalizedIsoKey,
+        rangeId: null
       };
     }
 
@@ -3007,24 +3104,54 @@
     }
 
     const type = normalizeCalendarEventType(calendarEventEditorState.type || 'event');
-    const events = getUserEventsForDate(calendarEventEditorState.isoKey);
+    const startDate = normalizeIsoDateForScheduleYear(
+      calendarEventEditorState.startDate,
+      calendarEventEditorState.isoKey
+    );
+    const endDate = normalizeIsoDateForScheduleYear(
+      calendarEventEditorState.endDate,
+      calendarEventEditorState.isoKey
+    );
+    const rangeKeys = getDateRangeKeys(startDate, endDate);
+    if (!rangeKeys.length) {
+      showToast('Choose a valid date range');
+      return;
+    }
 
     pushHistorySnapshot();
 
     if (calendarEventEditorState.eventId) {
-      const existingEvent = events.find(item => item.id === calendarEventEditorState.eventId);
-      if (existingEvent) {
-        existingEvent.title = title;
-        existingEvent.type = type;
+      const existing = findCalendarEventById(calendarEventEditorState.eventId);
+      if (existing?.event?.rangeId) {
+        removeEventsByRangeId(existing.event.rangeId);
+      } else if (existing) {
+        const dayEvents = getUserEventsForDate(existing.isoKey);
+        dayEvents.splice(existing.index, 1);
+        if (!dayEvents.length) {
+          delete userCalendarEvents[existing.isoKey];
+        }
       }
-    } else {
+
+      if (calendarEventEditorState.rangeId) {
+        removeEventsByRangeId(calendarEventEditorState.rangeId);
+      }
+    }
+
+    const rangeId = calendarEventEditorState.rangeId
+      || `range-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    rangeKeys.forEach((isoKey, index) => {
+      const events = getUserEventsForDate(isoKey);
       events.push({
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        id: `${rangeId}-${index}`,
+        rangeId,
+        rangeStart: rangeKeys[0],
+        rangeEnd: rangeKeys[rangeKeys.length - 1],
         title,
         type,
         allDay: true
       });
-    }
+    });
 
     calendarEventEditorState = null;
     renderCalendar();
@@ -3040,18 +3167,52 @@
 
   function removeCalendarEvent(isoKey, eventId) {
     if (!canEditCalendarEvents()) return;
-    const events = getUserEventsForDate(isoKey);
-    const index = events.findIndex(item => item.id === eventId);
-    if (index === -1) return;
+
+    const normalizedIsoKey = normalizeIsoDateForScheduleYear(isoKey, `${SCHEDULE_YEAR}-01-01`);
+    const events = getUserEventsForDate(normalizedIsoKey);
+    let index = events.findIndex(item => item.id === eventId);
+    let targetEvent = index !== -1 ? events[index] : null;
+
+    if (!targetEvent) {
+      const located = findCalendarEventById(eventId);
+      if (!located) return;
+      targetEvent = located.event;
+      index = located.index;
+      if (located.isoKey !== normalizedIsoKey) {
+        const locatedEvents = getUserEventsForDate(located.isoKey);
+        pushHistorySnapshot();
+        if (targetEvent?.rangeId) {
+          removeEventsByRangeId(targetEvent.rangeId);
+          if (calendarEventEditorState && calendarEventEditorState.eventId === eventId) {
+            calendarEventEditorState = null;
+          }
+          renderCalendar();
+          return;
+        }
+        locatedEvents.splice(index, 1);
+        if (!locatedEvents.length) {
+          delete userCalendarEvents[located.isoKey];
+        }
+        if (calendarEventEditorState && calendarEventEditorState.eventId === eventId) {
+          calendarEventEditorState = null;
+        }
+        renderCalendar();
+        return;
+      }
+    }
 
     pushHistorySnapshot();
-    events.splice(index, 1);
-    if (!events.length) {
-      delete userCalendarEvents[isoKey];
+
+    if (targetEvent?.rangeId) {
+      removeEventsByRangeId(targetEvent.rangeId);
+    } else {
+      events.splice(index, 1);
+      if (!events.length) {
+        delete userCalendarEvents[normalizedIsoKey];
+      }
     }
 
     if (calendarEventEditorState
-      && calendarEventEditorState.isoKey === isoKey
       && calendarEventEditorState.eventId === eventId) {
       calendarEventEditorState = null;
     }
@@ -3238,6 +3399,40 @@
           calendarEventEditorState.type = normalizeCalendarEventType(typeSelect.value);
         });
 
+        const startDateInput = document.createElement('input');
+        startDateInput.className = 'calendar-editor-input';
+        startDateInput.type = 'date';
+        startDateInput.min = `${SCHEDULE_YEAR}-01-01`;
+        startDateInput.max = `${SCHEDULE_YEAR}-12-31`;
+        startDateInput.value = normalizeIsoDateForScheduleYear(
+          calendarEventEditorState.startDate,
+          isoKey
+        );
+        startDateInput.addEventListener('input', () => {
+          if (!calendarEventEditorState) return;
+          calendarEventEditorState.startDate = normalizeIsoDateForScheduleYear(
+            startDateInput.value,
+            isoKey
+          );
+        });
+
+        const endDateInput = document.createElement('input');
+        endDateInput.className = 'calendar-editor-input';
+        endDateInput.type = 'date';
+        endDateInput.min = `${SCHEDULE_YEAR}-01-01`;
+        endDateInput.max = `${SCHEDULE_YEAR}-12-31`;
+        endDateInput.value = normalizeIsoDateForScheduleYear(
+          calendarEventEditorState.endDate,
+          isoKey
+        );
+        endDateInput.addEventListener('input', () => {
+          if (!calendarEventEditorState) return;
+          calendarEventEditorState.endDate = normalizeIsoDateForScheduleYear(
+            endDateInput.value,
+            isoKey
+          );
+        });
+
         const editorActions = document.createElement('div');
         editorActions.className = 'calendar-editor-actions';
 
@@ -3264,6 +3459,8 @@
 
         editorWrap.appendChild(titleInput);
         editorWrap.appendChild(typeSelect);
+        editorWrap.appendChild(startDateInput);
+        editorWrap.appendChild(endDateInput);
         editorWrap.appendChild(editorActions);
         dayCell.appendChild(editorWrap);
       }
