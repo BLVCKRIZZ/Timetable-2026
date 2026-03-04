@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-24';
+  const APP_BUILD_VERSION = '20260304-25';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -3650,17 +3650,26 @@
       return { startCell, endCell };
     }
 
-    const todayColumn = getDayColumnForDisplayedWeek();
-    if (!todayColumn) return null;
-
-    const todayCell = firstRow.children[todayColumn - 1];
-    if (!todayCell) return null;
-
-    if (window.getComputedStyle(todayCell).display === 'none') {
+    const firstVisibleDataCell = () => {
+      for (let index = firstDataColumnIndex; index <= lastDataColumnIndex; index += 1) {
+        const cell = firstRow.children[index];
+        if (!cell) continue;
+        if (window.getComputedStyle(cell).display === 'none') continue;
+        return cell;
+      }
       return null;
+    };
+
+    const todayColumn = getDayColumnForDisplayedWeek();
+    const todayCell = todayColumn ? firstRow.children[todayColumn - 1] : null;
+
+    if (todayCell && window.getComputedStyle(todayCell).display !== 'none') {
+      return { startCell: todayCell, endCell: todayCell };
     }
 
-    return { startCell: todayCell, endCell: todayCell };
+    const fallbackCell = firstVisibleDataCell();
+    if (!fallbackCell) return null;
+    return { startCell: fallbackCell, endCell: fallbackCell };
   }
 
   function updateNowLine() {
@@ -3684,12 +3693,7 @@
     const currentMinutes = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
     const visibleStart = timeSettings.startMinute;
     const visibleEnd = timeSettings.fullDay ? (24 * 60) : timeSettings.endMinute;
-    const visibleDuration = visibleEnd - visibleStart;
-
-    if (visibleDuration <= 0 || currentMinutes < visibleStart || currentMinutes > visibleEnd) {
-      nowLine.style.display = 'none';
-      return;
-    }
+    const visibleDuration = Math.max(1, visibleEnd - visibleStart);
 
     const tbody = document.getElementById('tbody');
     if (!tbody || !tbody.offsetHeight) {
@@ -3717,6 +3721,7 @@
     nowLine.style.top = `${top}px`;
     nowLine.style.left = `${left}px`;
     nowLine.style.width = `${width}px`;
+    nowLine.dataset.time = formatMinutesTo12h(currentMinutes);
     nowLine.style.display = 'block';
   }
 

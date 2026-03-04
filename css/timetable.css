@@ -652,7 +652,20 @@
   }
 
   .now-line::after {
-    content: none;
+    content: attr(data-time);
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translate(0, -50%);
+    background: #ff0000;
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    padding: 3px 5px;
+    border-radius: 999px;
+    white-space: nowrap;
   }
 
   table {
