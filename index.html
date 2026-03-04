@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Timetable</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/timetable.css?v=20260304-5">
+<link rel="stylesheet" href="css/timetable.css?v=20260304-6">
 </head>
 <body>
 
@@ -37,20 +37,24 @@
   <div id="settings-panel" class="settings-panel">
     <div class="settings-panel-head">
       <span class="settings-title">Customize</span>
-      <span id="simple-mode-status" class="settings-help">Mode: Simple</span>
-      <button id="simple-mode-toggle-btn" class="btn small" type="button" onclick="toggleSimpleCustomizeMode()">More Options</button>
+      <button id="customize-advanced-toggle" class="btn small" type="button" onclick="toggleAdvancedCustomize()">Advanced: Off</button>
       <button class="btn small" type="button" onclick="toggleSettingsPanel()">✕ Close</button>
     </div>
+    <div class="settings-tabs" role="tablist" aria-label="Customize sections">
+      <button id="tab-layout" class="btn small settings-tab-btn" type="button" onclick="setCustomizeTab('layout')">Layout</button>
+      <button id="tab-colors" class="btn small settings-tab-btn" type="button" onclick="setCustomizeTab('colors')">Colors</button>
+      <button id="tab-data" class="btn small settings-tab-btn" type="button" onclick="setCustomizeTab('data')">Data</button>
+    </div>
     <div class="settings-grid">
-      <div class="settings-card">
+      <div class="settings-card" data-tab="layout">
         <span class="settings-title">Timetable Tools</span>
         <button class="btn" data-requires-admin onclick="addColumn()">+ Add Column</button>
         <button class="btn" data-requires-admin onclick="removeColumn()">− Remove Column</button>
-        <button class="btn danger" data-requires-admin onclick="removeSelectedItem()">Remove Selected</button>
-        <button class="btn danger" data-requires-admin onclick="clearAll()">Clear All</button>
+        <button class="btn danger" data-requires-admin data-advanced onclick="removeSelectedItem()">Remove Selected</button>
+        <button class="btn danger" data-requires-admin data-advanced onclick="clearAll()">Clear Content</button>
       </div>
 
-      <div class="settings-card">
+      <div class="settings-card" data-tab="layout">
         <span class="settings-title">Time Grid</span>
         <span class="settings-label">Interval</span>
         <select id="time-interval-select" class="toolbar-select" data-admin-action onchange="onTimeSettingsChange()" title="How often time slots appear">
@@ -67,21 +71,20 @@
         <select id="time-start-select" class="toolbar-select" data-admin-action onchange="onTimeSettingsChange()" title="First time slot to show"></select>
         <span class="settings-label">End Time</span>
         <select id="time-end-select" class="toolbar-select" data-admin-action onchange="onTimeSettingsChange()" title="Last time slot to show"></select>
-        <span class="settings-help">Quick presets</span>
-        <button id="time-preset-early" class="btn small" data-admin-action onclick="applyTimePreset('early')" title="Set range to 1 AM through 4 AM">Preset: 1 AM - 4 AM</button>
-        <button id="time-preset-workday" class="btn small" data-admin-action onclick="applyTimePreset('workday')" title="Set range to 9 AM through 5 PM">Preset: 9 AM - 5 PM</button>
-        <button id="time-preset-full" class="btn small" data-admin-action onclick="applyTimePreset('full')" title="Show the full 24-hour day">Preset: 24 Hours</button>
+        <span class="settings-help" data-advanced>Quick presets</span>
+        <button id="time-preset-early" class="btn small" data-admin-action data-advanced onclick="applyTimePreset('early')" title="Set range to 1 AM through 4 AM">Preset: 1 AM - 4 AM</button>
+        <button id="time-preset-workday" class="btn small" data-admin-action data-advanced onclick="applyTimePreset('workday')" title="Set range to 9 AM through 5 PM">Preset: 9 AM - 5 PM</button>
+        <button id="time-preset-full" class="btn small" data-admin-action data-advanced onclick="applyTimePreset('full')" title="Show the full 24-hour day">Preset: 24 Hours</button>
       </div>
 
-      <div class="settings-card" data-simple="advanced">
+      <div class="settings-card" data-tab="data">
         <span class="settings-title">Manage Data</span>
         <button id="export-pdf-btn" class="btn small" data-admin-action onclick="exportTimetablePdf()">Export PDF</button>
-        <button class="btn small" data-admin-action onclick="clearDefaultPlaceholders()">Clear Defaults</button>
         <button class="btn small" data-admin-action onclick="undoPreviousChange()">Undo Previous</button>
-        <button class="btn small danger" data-admin-action onclick="clearAllChanges()">Clear All Changes</button>
+        <button class="btn small danger" data-admin-action data-advanced onclick="clearAllChanges()">Reset Timetable</button>
       </div>
 
-      <div class="settings-card" data-simple="advanced">
+      <div class="settings-card" data-tab="colors">
         <span class="settings-title">Cell Colors</span>
         <div class="color-tools">
           <input id="cell-color-picker" class="color-picker" type="color" value="#dbeafe" title="Choose color" />
@@ -207,7 +210,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <div id="build-badge" class="build-badge" aria-live="polite"></div>
-<script src="js/timetable.v20260303-9.js?b=20260304-5"></script>
+<script src="js/timetable.v20260303-9.js?b=20260304-6"></script>
 </body>
 </html>
 

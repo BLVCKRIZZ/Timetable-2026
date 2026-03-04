@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-5';
+  const APP_BUILD_VERSION = '20260304-6';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -70,6 +70,8 @@
   let timetableScope = 'week';
   let focusedDayColumn = 2;
   let calendarEventEditorState = null;
+  let activeCustomizeTab = 'layout';
+  let showCustomizeAdvanced = false;
   let columnThemePresetIndices = {};
   const DEFAULT_COLOR_PRESETS = ['#dbeafe', '#e9d5ff', '#dcfce7', '#fee2e2', '#fef3c7', '#cffafe', '#fce7f3', '#e5e7eb'];
   let colorPresets = [...DEFAULT_COLOR_PRESETS];
@@ -652,6 +654,41 @@
     setTimetableScope(value, { persistPreference: true });
   }
 
+  function applyCustomizePanelFilters() {
+    const panel = document.getElementById('settings-panel');
+    if (!panel) return;
+
+    panel.classList.toggle('show-advanced', showCustomizeAdvanced);
+
+    const tabButtons = document.querySelectorAll('.settings-tab-btn');
+    tabButtons.forEach((button) => {
+      const tabId = button.id.replace('tab-', '');
+      button.classList.toggle('active', tabId === activeCustomizeTab);
+    });
+
+    const cards = document.querySelectorAll('.settings-card[data-tab]');
+    cards.forEach((card) => {
+      card.classList.toggle('tab-hidden', card.dataset.tab !== activeCustomizeTab);
+    });
+
+    const advancedToggle = document.getElementById('customize-advanced-toggle');
+    if (advancedToggle) {
+      advancedToggle.textContent = `Advanced: ${showCustomizeAdvanced ? 'On' : 'Off'}`;
+      advancedToggle.setAttribute('aria-pressed', showCustomizeAdvanced ? 'true' : 'false');
+    }
+  }
+
+  function setCustomizeTab(tabName) {
+    const allowedTabs = ['layout', 'colors', 'data'];
+    activeCustomizeTab = allowedTabs.includes(tabName) ? tabName : 'layout';
+    applyCustomizePanelFilters();
+  }
+
+  function toggleAdvancedCustomize() {
+    showCustomizeAdvanced = !showCustomizeAdvanced;
+    applyCustomizePanelFilters();
+  }
+
   function onFocusDayChange(value) {
     const parsed = Number(value);
     const validColumns = getTimetableDataColumnIndices();
@@ -676,9 +713,10 @@
     toggleBtn.textContent = isOpen ? '✕ Close' : '⚙ Customize';
     if (isOpen) {
       panel.scrollTop = 0;
-      setSimpleCustomizeMode(getPreferredSimpleCustomizeMode());
+      showCustomizeAdvanced = false;
+      applyCustomizePanelFilters();
     } else {
-      setSimpleCustomizeMode(false);
+      panel.classList.remove('show-advanced');
     }
     syncEditModeWithCustomizePanel();
     if (activeView === 'calendar') {
