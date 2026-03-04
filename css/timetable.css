@@ -1579,10 +1579,10 @@
     .table-wrap {
       max-height: 72vh;
       overflow-x: auto;
-      overflow-y: hidden;
-      touch-action: pan-x;
+      overflow-y: auto;
+      touch-action: pan-x pan-y;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior-x: contain;
+      overscroll-behavior: contain;
     }
 
     #timetable input,
@@ -1773,10 +1773,10 @@
   @media (hover: none) {
     .table-wrap {
       overflow-x: auto;
-      overflow-y: hidden;
-      touch-action: pan-x;
+      overflow-y: auto;
+      touch-action: pan-x pan-y;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior-x: contain;
+      overscroll-behavior: contain;
     }
 
     th:first-child,
