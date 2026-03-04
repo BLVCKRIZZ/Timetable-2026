@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-20';
+  const APP_BUILD_VERSION = '20260304-21';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -455,20 +455,21 @@
   }
 
   function setEditMode(enabled) {
+    const controlsEnabled = true;
     const editableElements = document.querySelectorAll(
       '#main-title, .subtitle-input, #timetable input, #timetable textarea, .row-del'
     );
 
     editableElements.forEach(el => {
       if (el.tagName === 'BUTTON') {
-        el.disabled = !enabled;
+        el.disabled = !controlsEnabled;
       } else {
-        el.disabled = !enabled;
+        el.disabled = !controlsEnabled;
       }
     });
 
     document.querySelectorAll('[data-requires-admin]').forEach(btn => {
-      btn.disabled = !enabled;
+      btn.disabled = !controlsEnabled;
     });
 
     const timeGridActionIds = new Set([
@@ -486,7 +487,7 @@
         btn.disabled = false;
         return;
       }
-      btn.disabled = !enabled;
+      btn.disabled = !controlsEnabled;
     });
 
     const subtitleInput = document.querySelector('.subtitle-input');
@@ -500,7 +501,7 @@
 
     if (!status || !unlockBtn || !lockBtn) return;
 
-    if (enabled) {
+    if (controlsEnabled) {
       status.textContent = 'Customize unlocked';
       status.style.color = 'var(--accent)';
       unlockBtn.style.display = 'none';
@@ -1581,7 +1582,7 @@
       customizeUnlockBlockedUntil = 0;
       resetPasswordBlockedUntil = 0;
       clearResetPasswordCooldownTimer();
-      isAdmin = false;
+      isAdmin = true;
       setEditMode(false);
       setAuthMode('signin');
       document.getElementById('app-password').value = '';
@@ -1645,7 +1646,7 @@
       }
 
       isAppAuthenticated = false;
-      isAdmin = false;
+      isAdmin = true;
       setEditMode(false);
       document.getElementById('app-lock').classList.remove('app-hidden');
       ensureRuntimeLogoutButton();
@@ -1665,14 +1666,14 @@
     if (customizeUnlockBlockedUntil > now) {
       const secondsRemaining = Math.ceil((customizeUnlockBlockedUntil - now) / 1000);
       showToast(`Try again in ${secondsRemaining}s`);
-      isAdmin = false;
+      isAdmin = true;
       setEditMode(false);
       return;
     }
 
     if (!isAppAuthenticated || !currentUserId) {
       showToast('Sign in first to unlock customization');
-      isAdmin = false;
+      isAdmin = true;
       setEditMode(false);
       return;
     }
@@ -1680,14 +1681,14 @@
     const password = passwordField.value;
     if (!password) {
       showToast('Enter your account password');
-      isAdmin = false;
+      isAdmin = true;
       setEditMode(false);
       return;
     }
 
     if (!supabaseClient) {
       showToast('Password verification unavailable');
-      isAdmin = false;
+      isAdmin = true;
       setEditMode(false);
       return;
     }
@@ -1698,7 +1699,7 @@
 
       if (userError || !userEmail) {
         showToast('Unable to verify session. Sign in again');
-        isAdmin = false;
+        isAdmin = true;
         setEditMode(false);
         return;
       }
@@ -1720,7 +1721,7 @@
           showToast(`Invalid password. ${attemptsLeft} attempt(s) left`);
         }
         passwordField.value = '';
-        isAdmin = false;
+        isAdmin = true;
         setEditMode(false);
         return;
       }
@@ -1733,13 +1734,13 @@
       passwordField.value = '';
     } catch (error) {
       showToast('Unable to verify password right now');
-      isAdmin = false;
+      isAdmin = true;
       setEditMode(false);
     }
   }
 
   function lockCustomize() {
-    isAdmin = false;
+    isAdmin = true;
     syncEditModeWithCustomizePanel();
   }
 
@@ -3595,7 +3596,7 @@
   rebuildRowsForTimeSettings(defaultRows);
   bindHeaderSelection();
   pushHistorySnapshot();
-  setEditMode(false);
+  setEditMode(true);
   buildCountrySelect();
   renderWeekLabel();
   initTimetableViewportControls();
