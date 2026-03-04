@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Timetable</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/timetable.css?v=20260304-7">
+<link rel="stylesheet" href="css/timetable.css?v=20260304-8">
 </head>
 <body>
 
@@ -150,7 +150,7 @@
       </select>
       <select id="focus-day-select" class="toolbar-select" onchange="onFocusDayChange(this.value)"></select>
     </div>
-    <div class="toolbar-group">
+    <div class="toolbar-group desktop-week-nav">
       <button class="btn small" id="prev-week-btn" onclick="changeWeek(-1)">← Prev Week</button>
       <button class="btn small" onclick="goToCurrentWeek()">Today</button>
       <button class="btn small" id="next-week-btn" onclick="changeWeek(1)">Next Week →</button>
@@ -164,6 +164,7 @@
 
   <div class="view-stack">
     <div id="timetable-panel" class="view-panel active">
+      <div id="day-pill-bar" class="day-pill-bar" aria-label="Day selector"></div>
       <div id="timetable-swipe-hint" class="swipe-hint" aria-live="polite">Swipe left/right to see all timetable columns →</div>
       <div class="table-wrap">
         <div id="now-line" class="now-line"></div>
@@ -207,10 +208,16 @@
   </div>
 </div>
 
+<div class="mobile-week-nav" aria-label="Week navigation">
+  <button class="btn small" type="button" onclick="changeWeek(-1)">← Prev</button>
+  <button class="btn small" type="button" onclick="goToCurrentWeek()">Today</button>
+  <button class="btn small" type="button" onclick="changeWeek(1)">Next →</button>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <div id="build-badge" class="build-badge" aria-live="polite"></div>
-<script src="js/timetable.v20260303-9.js?b=20260304-7"></script>
+<script src="js/timetable.v20260303-9.js?b=20260304-8"></script>
 </body>
 </html>
 

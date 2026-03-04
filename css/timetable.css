@@ -378,6 +378,14 @@
     box-shadow: inset 0 -1px 0 rgba(205, 189, 162, 0.65), inset 0 -8px 14px rgba(255,255,255,0.35);
   }
 
+  .day-pill-bar {
+    display: none;
+  }
+
+  .mobile-week-nav {
+    display: none;
+  }
+
   .toolbar-group {
     display: flex;
     align-items: center;
@@ -1163,6 +1171,10 @@
   }
 
   @media (max-width: 720px) {
+    body {
+      padding-bottom: max(88px, env(safe-area-inset-bottom));
+    }
+
     .settings-tabs {
       top: 42px;
     }
@@ -1225,8 +1237,13 @@
     .admin-auth input,
     #cell-color-picker,
     .auth-card input {
-      min-height: 42px;
+      min-height: 44px;
       font-size: 12px;
+    }
+
+    .event-icon-btn {
+      min-width: 44px;
+      min-height: 44px;
     }
 
     .auth-card input,
@@ -1234,14 +1251,9 @@
       font-size: 16px;
     }
 
-    .event-icon-btn {
-      min-width: 32px;
-      min-height: 32px;
-    }
-
     .row-del {
-      width: 32px;
-      height: 32px;
+      width: 44px;
+      height: 44px;
       font-size: 18px;
     }
 
@@ -1264,6 +1276,63 @@
       flex-wrap: nowrap;
       scrollbar-width: thin;
       -webkit-overflow-scrolling: touch;
+    }
+
+    .desktop-week-nav {
+      display: none;
+    }
+
+    .day-pill-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 8px 10px;
+      position: sticky;
+      top: 48px;
+      z-index: 15;
+      background: var(--toolbar-bg);
+      border-bottom: 1px solid rgba(205, 189, 162, 0.45);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .day-pill-btn {
+      flex: 0 0 auto;
+      min-width: 64px;
+      min-height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 999px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+    }
+
+    .day-pill-btn.active {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+
+    .mobile-week-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 25;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 8px 10px max(10px, env(safe-area-inset-bottom));
+      background: rgba(255, 253, 247, 0.98);
+      border-top: 1px solid rgba(205, 189, 162, 0.65);
+      backdrop-filter: blur(4px);
+    }
+
+    .mobile-week-nav .btn {
+      min-height: 44px;
+      width: 100%;
     }
 
     .week-toolbar .toolbar-group {
@@ -1412,7 +1481,7 @@
     .admin-auth input,
     #cell-color-picker,
     .auth-card input {
-      min-height: 38px;
+      min-height: 44px;
       font-size: 11px;
       letter-spacing: 0.04em;
       padding-left: 10px;

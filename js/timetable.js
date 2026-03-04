@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-7';
+  const APP_BUILD_VERSION = '20260304-8';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -609,6 +609,47 @@
     daySelect.style.display = timetableScope === 'day' ? 'inline-block' : 'none';
   }
 
+  function renderDayPillSelector() {
+    const pillBar = document.getElementById('day-pill-bar');
+    if (!pillBar) return;
+
+    const dayColumns = getTimetableDataColumnIndices();
+    pillBar.innerHTML = '';
+
+    dayColumns.forEach((columnIndex) => {
+      const headerInput = document.querySelector(`#header-row th:nth-child(${columnIndex}) input`);
+      const label = (headerInput?.value || `Day ${columnIndex - 1}`).trim();
+      const shortLabel = label.split(' ').slice(0, 2).join(' ');
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'day-pill-btn';
+      button.textContent = shortLabel;
+      button.setAttribute('aria-label', label);
+      button.classList.toggle('active', focusedDayColumn === columnIndex);
+      button.onclick = () => onDayPillTap(columnIndex);
+      pillBar.appendChild(button);
+    });
+  }
+
+  function onDayPillTap(columnIndex) {
+    focusedDayColumn = columnIndex;
+    const focusSelect = document.getElementById('focus-day-select');
+    if (focusSelect) {
+      focusSelect.value = String(columnIndex);
+    }
+
+    if (isSmallScreen()) {
+      setTimetableScope('day', { persistPreference: true });
+      return;
+    }
+
+    applyTimetableColumnVisibility();
+    renderDayPillSelector();
+    scrollDayColumnIntoView(columnIndex);
+    updateNowLine();
+  }
+
   function applyTimetableColumnVisibility() {
     const headerRow = document.getElementById('header-row');
     if (!headerRow) return;
@@ -631,6 +672,8 @@
         cell.style.display = shouldShow ? '' : 'none';
       });
     });
+
+    renderDayPillSelector();
   }
 
   function setTimetableScope(scope, options = {}) {
@@ -702,12 +745,14 @@
 
     focusedDayColumn = parsed;
     applyTimetableColumnVisibility();
+    renderDayPillSelector();
     updateNowLine();
   }
 
   function initTimetableViewportControls() {
     refreshFocusDaySelect();
-    setTimetableScope(getStoredTimetableScope(), { persistPreference: false });
+    setTimetableScope(isSmallScreen() ? 'day' : getStoredTimetableScope(), { persistPreference: false });
+    renderDayPillSelector();
   }
 
   function toggleSettingsPanel() {
