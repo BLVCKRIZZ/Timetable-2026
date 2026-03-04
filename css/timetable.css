@@ -291,6 +291,35 @@
     line-height: 1.45;
   }
 
+  .help-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .help-time-grid {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  .help-time-row {
+    display: grid;
+    gap: 4px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: #7a6752;
+  }
+
+  .help-time-value {
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
   body.help-open {
     overflow: hidden;
   }
@@ -1507,11 +1536,10 @@
     }
 
     .week-toolbar {
-      overflow-x: auto;
-      overflow-y: hidden;
-      flex-wrap: nowrap;
-      scrollbar-width: thin;
-      -webkit-overflow-scrolling: touch;
+      overflow-x: hidden;
+      overflow-y: visible;
+      flex-wrap: wrap;
+      align-items: flex-start;
     }
 
     .desktop-week-nav {
@@ -1613,9 +1641,16 @@
     }
 
     .week-toolbar .toolbar-group {
-      width: auto;
-      flex-wrap: nowrap;
-      flex: 0 0 auto;
+      width: 100%;
+      flex-wrap: wrap;
+      flex: 1 1 100%;
+      align-items: center;
+    }
+
+    .week-toolbar .toolbar-group .btn,
+    .week-toolbar .toolbar-group .toolbar-select {
+      flex: 1 1 calc(50% - 6px);
+      min-width: 120px;
     }
 
     .week-label {

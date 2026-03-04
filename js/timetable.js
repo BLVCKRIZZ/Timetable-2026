@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-32';
+  const APP_BUILD_VERSION = '20260304-33';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -80,6 +80,7 @@
   let touchNavTracking = false;
   let calendarCollapsedMobile = true;
   let actionDialogResolver = null;
+  let helpRegionalTimeTimer = null;
   let columnThemePresetIndices = {};
   const DEFAULT_COLOR_PRESETS = ['#dbeafe', '#e9d5ff', '#dcfce7', '#fee2e2', '#fef3c7', '#cffafe', '#fce7f3', '#e5e7eb'];
   let colorPresets = [...DEFAULT_COLOR_PRESETS];
@@ -851,6 +852,36 @@
       if (event.key !== 'Escape') return;
       closeHelpMenu();
     });
+
+    initHelpRegionalTime();
+  }
+
+  function updateHelpRegionalTime() {
+    const timezoneLabel = document.getElementById('help-timezone-label');
+    const localTimeLabel = document.getElementById('help-local-time-label');
+    if (!timezoneLabel || !localTimeLabel) return;
+
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local timezone';
+    timezoneLabel.textContent = timezone;
+
+    const now = new Date();
+    localTimeLabel.textContent = now.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+      timeZone: timezone
+    });
+  }
+
+  function initHelpRegionalTime() {
+    updateHelpRegionalTime();
+
+    if (helpRegionalTimeTimer) {
+      clearInterval(helpRegionalTimeTimer);
+    }
+
+    helpRegionalTimeTimer = setInterval(updateHelpRegionalTime, 1000);
   }
 
   function setAuthMode(mode) {
