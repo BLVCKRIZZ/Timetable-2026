@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260304-6';
+  const APP_BUILD_VERSION = '20260304-7';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -61,6 +61,7 @@
   const CUSTOMIZE_LOCKOUT_MS = 60 * 1000;
   const CUSTOMIZE_LOCKOUT_STORAGE_PREFIX = 'customize_unlock_lockout_';
   const SIMPLE_CUSTOMIZE_MODE_STORAGE_KEY = 'simple_customize_mode';
+  const CUSTOMIZE_TAB_STORAGE_KEY = 'customize_active_tab';
   const TIMETABLE_SCOPE_STORAGE_KEY = 'timetable_scope_mode';
   const TIMETABLE_SWIPE_HINT_STORAGE_KEY = 'timetable_swipe_hint_dismissed';
   const MOBILE_MANUAL_SCROLL_ONLY = true;
@@ -681,6 +682,11 @@
   function setCustomizeTab(tabName) {
     const allowedTabs = ['layout', 'colors', 'data'];
     activeCustomizeTab = allowedTabs.includes(tabName) ? tabName : 'layout';
+    try {
+      localStorage.setItem(CUSTOMIZE_TAB_STORAGE_KEY, activeCustomizeTab);
+    } catch (error) {
+      // ignore storage errors
+    }
     applyCustomizePanelFilters();
   }
 
@@ -713,6 +719,14 @@
     toggleBtn.textContent = isOpen ? '✕ Close' : '⚙ Customize';
     if (isOpen) {
       panel.scrollTop = 0;
+      try {
+        const savedTab = localStorage.getItem(CUSTOMIZE_TAB_STORAGE_KEY);
+        if (savedTab === 'layout' || savedTab === 'colors' || savedTab === 'data') {
+          activeCustomizeTab = savedTab;
+        }
+      } catch (error) {
+        // ignore storage errors
+      }
       showCustomizeAdvanced = false;
       applyCustomizePanelFilters();
     } else {
