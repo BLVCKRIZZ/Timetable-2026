@@ -10,6 +10,7 @@
     --paper: #fffdf7;
     --ink: #1a1208;
     --accent: #c84b11;
+    --ui-accent: #00b7d6;
     --cyber-cyan: #00f5ff;
     --electric-violet: #8a2be2;
     --line: #d9d0bc;
@@ -21,8 +22,8 @@
     --panel-grad-end: rgba(255,253,247,0.92);
     --toolbar-bg: rgba(255, 253, 247, 0.95);
     --table-head-bg: rgba(255, 253, 247, 0.98);
-    --accent-soft: rgba(200,75,17,0.08);
-    --accent-mid: rgba(200,75,17,0.14);
+    --accent-soft: rgba(0,183,214,0.08);
+    --accent-mid: rgba(0,183,214,0.16);
     --focus-bg: #fffbf0;
   }
 
@@ -82,8 +83,8 @@
     width: min(1700px, 96vw);
     margin: 0 auto;
     background: var(--paper);
-    border-radius: 10px;
-    box-shadow: 0 4px 40px var(--shadow), 0 1px 3px rgba(0,0,0,0.06);
+    border-radius: 18px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
     overflow: hidden;
     transition: transform 0.25s ease, box-shadow 0.25s ease;
   }
@@ -95,7 +96,7 @@
 
   /* Header */
   .header {
-    padding: 40px 48px 32px;
+    padding: 44px 52px 36px;
     border-bottom: none;
     box-shadow: inset 0 -1px 0 rgba(201, 183, 154, 0.7), inset 0 -10px 18px rgba(255, 255, 255, 0.55);
     background: linear-gradient(180deg, var(--header-grad-start), var(--header-grad-end));
@@ -108,17 +109,17 @@
   .title-area { flex: 1; }
 
   .label {
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: var(--accent);
+    color: var(--ui-accent);
     margin-bottom: 8px;
     display: block;
   }
 
   #main-title {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(28px, 5vw, 48px);
+    font-size: clamp(32px, 5.6vw, 56px);
     line-height: 1.1;
     border: none;
     background: transparent;
@@ -134,7 +135,7 @@
 
   .subtitle-input {
     font-family: 'DM Mono', monospace;
-    font-size: 13px;
+    font-size: 14px;
     color: #888;
     border: none;
     background: transparent;
@@ -172,7 +173,7 @@
   .settings-panel {
     border-bottom: none;
     background: linear-gradient(180deg, var(--panel-grad-start), var(--panel-grad-end));
-    box-shadow: inset 0 -1px 0 rgba(205, 189, 162, 0.65), inset 0 -8px 16px rgba(255,255,255,0.45);
+    box-shadow: inset 0 -1px 0 rgba(205, 189, 162, 0.45), 0 8px 22px rgba(0,0,0,0.06);
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.28s ease;
@@ -236,10 +237,10 @@
 
   .settings-card {
     border: 1px solid rgba(215, 203, 180, 0.65);
-    border-radius: 10px;
+    border-radius: 14px;
     background: linear-gradient(160deg, rgba(255,255,255,0.92), rgba(250,244,232,0.82));
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.65), 0 8px 22px rgba(0,0,0,0.05);
-    padding: 12px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -253,14 +254,14 @@
   }
 
   .settings-title {
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: #6f5c46;
   }
 
   .settings-label {
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: #7c6a52;
@@ -308,12 +309,12 @@
 
   .btn {
     font-family: 'DM Mono', monospace;
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: 0.08em;
-    padding: 8px 16px;
-    border: 1.5px solid var(--ink);
+    padding: 10px 16px;
+    border: 1.5px solid var(--ui-accent);
     background: transparent;
-    color: var(--ink);
+    color: var(--ui-accent);
     cursor: pointer;
     transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
     white-space: nowrap;
@@ -337,21 +338,21 @@
   td input:focus-visible,
   td textarea:focus-visible,
   th input:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--ui-accent);
     outline-offset: 2px;
   }
 
-  .btn:hover { background: var(--ink); color: var(--paper); transform: translateY(-1px); box-shadow: 0 5px 14px rgba(0,0,0,0.12); }
+  .btn:hover { background: var(--ui-accent); color: #fff; transform: translateY(-1px); box-shadow: 0 5px 14px rgba(0,183,214,0.25); }
   .btn.auth-active {
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--ui-accent);
+    color: #fff;
   }
   .btn.time-preset-active {
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--ui-accent);
+    color: #fff;
   }
-  .btn.danger { border-color: var(--accent); color: var(--accent); }
-  .btn.danger:hover { background: var(--accent); color: white; }
+  .btn.danger { border-color: var(--ui-accent); color: var(--ui-accent); }
+  .btn.danger:hover { background: var(--ui-accent); color: white; }
 
   /* Table */
   .table-wrap {
@@ -361,6 +362,8 @@
     padding: 0;
     position: relative;
     animation: fadeIn 0.35s ease;
+    border-radius: 14px;
+    box-shadow: inset 0 0 0 1px rgba(217, 208, 188, 0.45);
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     touch-action: pan-x pan-y;
@@ -413,7 +416,7 @@
   }
 
   .toolbar-select:focus {
-    border-color: var(--accent);
+    border-color: var(--ui-accent);
   }
 
   .week-label {
@@ -548,7 +551,7 @@
 
   th input {
     font-family: 'DM Mono', monospace;
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     font-weight: 500;
@@ -591,8 +594,8 @@
 
   td input, td textarea {
     font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    padding: 14px 20px;
+    font-size: 14px;
+    padding: 16px 22px;
     border: none;
     background: transparent;
     color: var(--ink);
@@ -635,7 +638,7 @@
 
   td:first-child input {
     font-weight: 500;
-    font-size: 12px;
+    font-size: 13px;
     letter-spacing: 0.05em;
     color: var(--accent);
     padding-left: 48px;
@@ -704,7 +707,7 @@
   }
 
   .selected-cell {
-    box-shadow: inset 0 0 0 2px var(--accent) !important;
+    box-shadow: inset 0 0 0 2px var(--ui-accent) !important;
   }
 
   tr.selected-row td {
@@ -717,11 +720,11 @@
   }
 
   .today-col {
-    box-shadow: inset 0 0 0 1px var(--accent);
+    box-shadow: inset 0 0 0 1px var(--ui-accent);
   }
 
   .today-header input {
-    color: var(--accent);
+    color: var(--ui-accent);
     font-weight: 700;
   }
 
