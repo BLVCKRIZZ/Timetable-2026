@@ -908,40 +908,38 @@
     position: absolute;
     pointer-events: none;
     z-index: 1;
-    background-image: linear-gradient(to bottom, rgba(88, 72, 53, 0.2) 1px, transparent 1px);
+    background-image: linear-gradient(to bottom, rgba(108, 138, 188, 0.34) 1px, transparent 1px);
   }
 
   .timed-event-block {
     font-family: 'DM Mono', monospace;
-    font-size: 9px;
-    line-height: 1.15;
+    font-size: 10px;
+    line-height: 1.18;
     color: var(--ink);
-    background: var(--event-chip-base, rgba(200,75,17,0.12));
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 2px 3px;
+    background: rgba(66, 84, 99, 0.78);
+    border: 1px solid rgba(150, 172, 192, 0.25);
+    border-radius: 8px;
+    padding: 5px 5px 4px;
     position: absolute;
     box-sizing: border-box;
     overflow: hidden;
     white-space: nowrap;
-    border-left: 3px solid rgba(45, 35, 25, 0.42);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    border-left: 4px solid rgba(222, 232, 243, 0.85);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.24);
   }
 
   .timed-event-block-event {
-    background: var(--event-chip-deep, rgba(79,70,229,0.16));
-    border-left-color: rgba(44, 30, 122, 0.55);
+    background: rgba(66, 84, 99, 0.78);
+    border-left-color: rgba(222, 232, 243, 0.85);
   }
 
   .timed-event-block-birthday {
-    background: var(--event-chip-lunch, rgba(245,158,11,0.18));
-    border-left-color: rgba(148, 94, 5, 0.58);
+    background: rgba(86, 92, 114, 0.82);
+    border-left-color: rgba(232, 213, 174, 0.9);
   }
 
   .timed-event-block-overlap {
-    background: var(--event-chip-meeting, rgba(220,38,38,0.15));
-    border-color: rgba(220, 38, 38, 0.38);
-    border-left-color: rgba(127, 29, 29, 0.58);
+    border-color: rgba(176, 196, 219, 0.36);
   }
 
   .timed-event-line {
@@ -952,14 +950,15 @@
 
   .timed-event-line-title {
     font-weight: 700;
-    font-size: 10px;
+    font-size: 11px;
     line-height: 1.2;
+    letter-spacing: 0.01em;
   }
 
   .timed-event-line-meta {
-    font-size: 9px;
-    line-height: 1.15;
-    opacity: 0.92;
+    font-size: 10px;
+    line-height: 1.12;
+    opacity: 0.9;
   }
 
   .timed-event-badge {

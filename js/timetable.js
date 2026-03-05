@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-52';
+  const APP_BUILD_VERSION = '20260305-53';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -2699,10 +2699,10 @@
 
   function getPixelsPerMinute() {
     const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1024;
-    if (viewportWidth <= 480) return 0.56;
-    if (viewportWidth <= 768) return 0.64;
-    if (viewportWidth <= 1024) return 0.78;
-    return 0.92;
+    if (viewportWidth <= 480) return 1.05;
+    if (viewportWidth <= 768) return 0.98;
+    if (viewportWidth <= 1024) return 0.92;
+    return 0.86;
   }
 
   function applyTimeScaleLayout() {
@@ -2847,7 +2847,7 @@
       });
 
       const laneCount = Math.max(1, lanesEnd.length);
-      const blockGap = 4;
+      const blockGap = 2;
       const laneWidth = (dayRect.width - (blockGap * (laneCount - 1))) / laneCount;
 
       timedEvents.forEach((entry) => {
@@ -2857,7 +2857,7 @@
         if (clampedEnd <= clampedStart) return;
 
         const topPx = (clampedStart - rangeStartMinute) * pixelsPerMinute;
-        const heightPx = Math.max(10, (clampedEnd - clampedStart) * pixelsPerMinute);
+        const heightPx = Math.max(12, (clampedEnd - clampedStart) * pixelsPerMinute);
 
         const block = document.createElement('div');
         const typeClass = entry.eventItem.type === 'birthday'
@@ -2883,11 +2883,11 @@
         block.appendChild(titleLine);
 
         const metaLines = [
-          `📍 ${String(entry.eventItem.location || `${startLabel} - ${endLabel}`)}`,
-          `👥 ${String(entry.eventItem.attendee || (entry.eventItem.type === 'birthday' ? 'Birthday' : 'Event'))}`,
-          `📝 ${String(entry.eventItem.notes || `${Math.max(1, clampedEnd - clampedStart)} min`)}`
+          String(entry.eventItem.location || `${startLabel} - ${endLabel}`),
+          String(entry.eventItem.attendee || (entry.eventItem.type === 'birthday' ? 'Birthday' : 'Event')),
+          String(entry.eventItem.notes || `${Math.max(1, clampedEnd - clampedStart)} min`)
         ];
-        const visibleMetaCount = heightPx < 20 ? 0 : heightPx < 34 ? 1 : heightPx < 48 ? 2 : 3;
+        const visibleMetaCount = heightPx < 24 ? 0 : heightPx < 42 ? 1 : heightPx < 64 ? 2 : 3;
         for (let index = 0; index < visibleMetaCount; index++) {
           const meta = document.createElement('div');
           meta.className = 'timed-event-line timed-event-line-meta';
