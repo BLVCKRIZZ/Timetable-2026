@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-41';
+  const APP_BUILD_VERSION = '20260305-42';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -1214,7 +1214,74 @@
     activeCellEditorInput = null;
   }
 
-  function saveCellEditSheet() {
+  function getTimetableEventCellContext(inputElement) {
+    if (!inputElement) return null;
+
+    const td = inputElement.closest('td');
+    const tr = inputElement.closest('tr');
+    if (!td || !tr) return null;
+
+    const cells = Array.from(tr.children);
+    const columnIndex = cells.indexOf(td);
+    if (columnIndex < 1 || columnIndex > 7) return null;
+
+    const rows = Array.from(document.querySelectorAll('#tbody tr'));
+    const rowIndex = rows.indexOf(tr);
+    if (rowIndex < 0) return null;
+
+    const timeCellInput = tr.children[0]?.querySelector('input, textarea');
+    const slotStartMinutes = parseTimeToMinutes(timeCellInput?.value || '');
+    if (!Number.isFinite(slotStartMinutes)) return null;
+
+    const nextRow = rows[rowIndex + 1];
+    const nextTimeCellInput = nextRow?.children[0]?.querySelector('input, textarea');
+    const nextStartMinutes = parseTimeToMinutes(nextTimeCellInput?.value || '');
+    const slotEndMinutes = Number.isFinite(nextStartMinutes)
+      ? nextStartMinutes
+      : Math.min((24 * 60), slotStartMinutes + (timeSettings.intervalMinutes || 30));
+
+    const weekIsoKeys = getDisplayedWeekIsoKeys();
+    const isoKey = weekIsoKeys[columnIndex - 1];
+    if (!isoKey) return null;
+
+    return {
+      isoKey,
+      startTime: formatMinutesToTimeInput(slotStartMinutes),
+      endTime: formatMinutesToTimeInput(slotEndMinutes)
+    };
+  }
+
+  async function maybePromptTimedEventForCell(inputElement, rawTitle) {
+    const title = String(rawTitle || '').trim();
+    if (!title) return;
+    if (!canEditCalendarEvents()) return;
+
+    const context = getTimetableEventCellContext(inputElement);
+    if (!context) return;
+
+    const { confirmed } = await openActionDialog({
+      title: 'Set time period',
+      message: `Set start and end time for "${title}"?`,
+      confirmText: 'Set Time',
+      cancelText: 'Skip'
+    });
+    if (!confirmed) return;
+
+    openCalendarEventEditor(context.isoKey);
+    if (!calendarEventEditorState) return;
+
+    calendarEventEditorState.title = title;
+    calendarEventEditorState.type = 'event';
+    calendarEventEditorState.startDate = context.isoKey;
+    calendarEventEditorState.endDate = context.isoKey;
+    calendarEventEditorState.startTime = context.startTime;
+    calendarEventEditorState.endTime = context.endTime;
+
+    renderCalendar();
+    showToast('Adjust time period, then tap Add');
+  }
+
+  async function saveCellEditSheet() {
     if (!activeCellEditorInput) {
       closeCellEditSheet();
       return;
@@ -1226,6 +1293,7 @@
     activeCellEditorInput.value = nextValue;
     applyEventChip(activeCellEditorInput);
     updateNowLine();
+    await maybePromptTimedEventForCell(activeCellEditorInput, nextValue);
     closeCellEditSheet();
     showToast('Cell updated');
   }
@@ -1999,6 +2067,7 @@
     inp.addEventListener('change', () => {
       pushHistorySnapshot();
       updateNowLine();
+      void maybePromptTimedEventForCell(inp, inp.value);
     });
     td.addEventListener('click', () => {
       if (isFirst) {
@@ -2044,6 +2113,7 @@
       newInp.addEventListener('change', () => {
         pushHistorySnapshot();
         updateNowLine();
+        void maybePromptTimedEventForCell(newInp, newInp.value);
       });
       newInp.addEventListener('dblclick', () => expandToTextarea(newInp, td));
       td.replaceChild(newInp, ta);
@@ -2333,6 +2403,13 @@
     const suffix = h24 >= 12 ? 'PM' : 'AM';
     const h12 = h24 % 12 || 12;
     return `${h12}:${String(mm).padStart(2, '0')}:${String(seconds).padStart(2, '0')} ${suffix}`;
+  }
+
+  function formatMinutesToTimeInput(minutes) {
+    const normalized = Math.max(0, Math.min(1439, Math.floor(Number(minutes) || 0)));
+    const hour = Math.floor(normalized / 60);
+    const minute = normalized % 60;
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
   }
 
   function minuteToOptionValue(minutes) {
