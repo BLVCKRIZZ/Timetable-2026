@@ -883,6 +883,44 @@
     transition: background 0.15s ease, box-shadow 0.15s ease;
   }
 
+  td.timed-event-cell {
+    position: relative;
+  }
+
+  .timed-event-overlay {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .timed-event-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    line-height: 1.2;
+    color: var(--ink);
+    background: var(--event-chip-deep, rgba(79,70,229,0.12));
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 2px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .timed-event-badge-more {
+    background: var(--event-chip-base, rgba(200,75,17,0.06));
+  }
+
+  td.timed-event-overlap .timed-event-badge {
+    background: var(--event-chip-meeting, rgba(220,38,38,0.12));
+  }
+
   td input:hover, td textarea:hover {
     filter: none;
   }

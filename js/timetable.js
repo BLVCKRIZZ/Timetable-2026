@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-39';
+  const APP_BUILD_VERSION = '20260305-40';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -2462,6 +2462,122 @@
     return slots;
   }
 
+  function getTimedEventMinuteRange(eventItem) {
+    const startMinutes = timeInputToMinutes(eventItem?.startTime || '');
+    const endMinutes = timeInputToMinutes(eventItem?.endTime || '');
+    if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
+      return null;
+    }
+    return { startMinutes, endMinutes };
+  }
+
+  function getDisplayedWeekIsoKeys() {
+    const monday = getDisplayedMonday();
+    const isoKeys = [];
+    for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+      const dayDate = new Date(monday);
+      dayDate.setDate(monday.getDate() + dayOffset);
+      isoKeys.push(getIsoDateKey(dayDate));
+    }
+    return isoKeys;
+  }
+
+  function refreshTimedEventsOnTimetable() {
+    const tbody = document.getElementById('tbody');
+    if (!tbody) return;
+
+    document.querySelectorAll('.timed-event-overlay').forEach((overlay) => overlay.remove());
+    document.querySelectorAll('#tbody td.timed-event-cell, #tbody td.timed-event-overlap').forEach((cell) => {
+      cell.classList.remove('timed-event-cell', 'timed-event-overlap');
+    });
+
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    if (!rows.length) return;
+
+    const slotStarts = rows.map((row) => {
+      const timeCellInput = row.children[0]?.querySelector('input, textarea');
+      return parseTimeToMinutes(timeCellInput?.value || '');
+    });
+
+    if (slotStarts.some((minutes) => minutes === null)) return;
+
+    const weekIsoKeys = getDisplayedWeekIsoKeys();
+
+    rows.forEach((row, rowIndex) => {
+      const slotStart = slotStarts[rowIndex];
+      const nextStart = slotStarts[rowIndex + 1];
+      const slotEnd = Number.isFinite(nextStart)
+        ? nextStart
+        : Math.min((24 * 60), slotStart + (timeSettings.intervalMinutes || 30));
+
+      for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+        const td = row.children[dayOffset + 1];
+        if (!td) continue;
+
+        const isoKey = weekIsoKeys[dayOffset];
+        const dayEvents = Array.isArray(userCalendarEvents[isoKey]) ? userCalendarEvents[isoKey] : [];
+        const matches = dayEvents.filter((eventItem) => {
+          const range = getTimedEventMinuteRange(eventItem);
+          if (!range) return false;
+          return range.startMinutes < slotEnd && range.endMinutes > slotStart;
+        });
+
+        if (!matches.length) continue;
+
+        td.classList.add('timed-event-cell');
+        if (matches.length > 1) {
+          td.classList.add('timed-event-overlap');
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'timed-event-overlay';
+
+        const visibleEvents = matches.slice(0, 2);
+        visibleEvents.forEach((eventItem) => {
+          const badge = document.createElement('div');
+          badge.className = 'timed-event-badge';
+
+          const startLabel = formatTimeInputLabel(eventItem.startTime || '');
+          const endLabel = formatTimeInputLabel(eventItem.endTime || '');
+          const title = eventItem.title || 'Event';
+          badge.textContent = `${title} (${startLabel}-${endLabel})`;
+          overlay.appendChild(badge);
+        });
+
+        if (matches.length > visibleEvents.length) {
+          const moreBadge = document.createElement('div');
+          moreBadge.className = 'timed-event-badge timed-event-badge-more';
+          moreBadge.textContent = `+${matches.length - visibleEvents.length} more`;
+          overlay.appendChild(moreBadge);
+        }
+
+        td.appendChild(overlay);
+      }
+    });
+  }
+
+  function countTimedEventOverlapsForDate(isoKey) {
+    const dayEvents = Array.isArray(userCalendarEvents[isoKey]) ? userCalendarEvents[isoKey] : [];
+    const timedEvents = dayEvents
+      .map((eventItem) => ({ eventItem, range: getTimedEventMinuteRange(eventItem) }))
+      .filter((entry) => !!entry.range)
+      .sort((a, b) => a.range.startMinutes - b.range.startMinutes);
+
+    let overlapCount = 0;
+    for (let i = 0; i < timedEvents.length; i++) {
+      const current = timedEvents[i];
+      for (let j = i + 1; j < timedEvents.length; j++) {
+        const next = timedEvents[j];
+        if (next.range.startMinutes >= current.range.endMinutes) {
+          break;
+        }
+        overlapCount += 1;
+      }
+    }
+
+    return overlapCount;
+  }
+
   function rebuildRowsForTimeSettings(existingRowsData = []) {
     const tbody = document.getElementById('tbody');
     const dayColumnCount = Math.max(0, getColCount() - 1);
@@ -2485,6 +2601,7 @@
     applyTimetableColumnVisibility();
     updateTodayHighlight();
     updateNowLine();
+    refreshTimedEventsOnTimetable();
   }
 
   function applyTimeSettings(nextSettings, options = {}) {
@@ -3459,6 +3576,11 @@
       });
     });
 
+    const overlapDays = rangeKeys.filter((isoKey) => countTimedEventOverlapsForDate(isoKey) > 0);
+    if (overlapDays.length) {
+      showToast(`Warning: overlapping timed events on ${overlapDays.length} day(s)`);
+    }
+
     calendarEventEditorState = null;
     renderCalendar();
   }
@@ -3820,6 +3942,7 @@
     }
 
     updateMonthButtons();
+    refreshTimedEventsOnTimetable();
   }
 
   function getMondayOfWeek(date) {
@@ -3885,6 +4008,7 @@
 
     refreshFocusDaySelect();
     applyTimetableColumnVisibility();
+    refreshTimedEventsOnTimetable();
   }
 
   function clampWeekToYear() {
