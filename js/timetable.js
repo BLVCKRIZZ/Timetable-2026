@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-46';
+  const APP_BUILD_VERSION = '20260305-47';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -1282,6 +1282,56 @@
     };
   }
 
+  function findSameDayEventByTitle(isoKey, title) {
+    const normalizedTitle = String(title || '').trim().toLowerCase();
+    if (!normalizedTitle) return null;
+
+    const dayEvents = getUserEventsForDate(isoKey);
+    const event = dayEvents.find((eventItem) => {
+      return String(eventItem?.title || '').trim().toLowerCase() === normalizedTitle;
+    });
+
+    return event || null;
+  }
+
+  function upsertTimedEventForCell(isoKey, title, startTime, endTime, existingEvent = null) {
+    pushHistorySnapshot();
+
+    if (existingEvent?.rangeId) {
+      removeEventsByRangeId(existingEvent.rangeId);
+    } else if (existingEvent?.id) {
+      const dayEvents = getUserEventsForDate(isoKey);
+      const nextEvents = dayEvents.filter((eventItem) => eventItem.id !== existingEvent.id);
+      if (nextEvents.length) {
+        userCalendarEvents[isoKey] = nextEvents;
+      } else {
+        delete userCalendarEvents[isoKey];
+      }
+    }
+
+    const rangeId = existingEvent?.rangeId
+      || `range-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const dayEvents = getUserEventsForDate(isoKey);
+    dayEvents.push({
+      id: `${rangeId}-0`,
+      rangeId,
+      rangeStart: isoKey,
+      rangeEnd: isoKey,
+      title,
+      type: normalizeCalendarEventType(existingEvent?.type || 'event'),
+      allDay: false,
+      startTime,
+      endTime
+    });
+
+    if (countTimedEventOverlapsForDate(isoKey) > 0) {
+      showToast('Warning: overlapping timed events on this day');
+    }
+
+    renderCalendar();
+  }
+
   async function maybePromptTimedEventForCell(inputElement, rawTitle) {
     const title = String(rawTitle || '').trim();
     if (!title) return;
@@ -1294,33 +1344,64 @@
     const context = getTimetableEventCellContext(inputElement);
     if (!context) return;
 
-    const normalizedTitle = title.toLowerCase();
-    const existingEvent = getUserEventsForDate(context.isoKey).find((eventItem) => {
-      return String(eventItem?.title || '').trim().toLowerCase() === normalizedTitle;
-    }) || null;
+    const existingEvent = findSameDayEventByTitle(context.isoKey, title);
 
     const { confirmed } = await openActionDialog({
       title: 'Set time period',
       message: existingEvent
-        ? `Edit start and end time for existing "${title}" event?`
-        : `Set start and end time for "${title}"?`,
+        ? `Edit duration for existing "${title}" event?`
+        : `Set duration for "${title}"?`,
       confirmText: existingEvent ? 'Edit Time' : 'Set Time',
       cancelText: 'Skip'
     });
     if (!confirmed) return;
 
-    openCalendarEventEditor(context.isoKey, existingEvent?.id || null);
-    if (!calendarEventEditorState) return;
+    const defaultStart = normalizeTimeInputValue(existingEvent?.startTime || context.startTime);
+    const defaultEnd = normalizeTimeInputValue(existingEvent?.endTime || context.endTime);
 
-    calendarEventEditorState.title = title;
-    calendarEventEditorState.type = normalizeCalendarEventType(existingEvent?.type || 'event');
-    calendarEventEditorState.startDate = context.isoKey;
-    calendarEventEditorState.endDate = context.isoKey;
-    calendarEventEditorState.startTime = normalizeTimeInputValue(existingEvent?.startTime || context.startTime);
-    calendarEventEditorState.endTime = normalizeTimeInputValue(existingEvent?.endTime || context.endTime);
+    const startStep = await openActionDialog({
+      title: 'Start time',
+      message: 'Enter start time (24-hour HH:MM, e.g. 09:12)',
+      confirmText: 'Next',
+      cancelText: 'Cancel',
+      showInput: true,
+      inputValue: defaultStart,
+      inputPlaceholder: 'HH:MM'
+    });
+    if (!startStep.confirmed) return;
 
-    renderCalendar();
-    showToast(existingEvent ? 'Adjust time period, then tap Save' : 'Adjust time period, then tap Add');
+    const normalizedStart = normalizeTimeInputValue(startStep.value);
+    if (!normalizedStart) {
+      showToast('Invalid start time. Use HH:MM (e.g. 09:12)');
+      return;
+    }
+
+    const endStep = await openActionDialog({
+      title: 'End time',
+      message: 'Enter end time (24-hour HH:MM, e.g. 11:45)',
+      confirmText: 'Save',
+      cancelText: 'Cancel',
+      showInput: true,
+      inputValue: defaultEnd,
+      inputPlaceholder: 'HH:MM'
+    });
+    if (!endStep.confirmed) return;
+
+    const normalizedEnd = normalizeTimeInputValue(endStep.value);
+    if (!normalizedEnd) {
+      showToast('Invalid end time. Use HH:MM (e.g. 11:45)');
+      return;
+    }
+
+    const startMinutes = timeInputToMinutes(normalizedStart);
+    const endMinutes = timeInputToMinutes(normalizedEnd);
+    if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
+      showToast('End time must be after start time');
+      return;
+    }
+
+    upsertTimedEventForCell(context.isoKey, title, normalizedStart, normalizedEnd, existingEvent);
+    showToast(existingEvent ? 'Event duration updated' : 'Event duration saved');
   }
 
   async function saveCellEditSheet(shouldOpenTimePrompt = true) {
