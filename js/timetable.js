@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-40';
+  const APP_BUILD_VERSION = '20260305-41';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -2532,24 +2532,35 @@
         const overlay = document.createElement('div');
         overlay.className = 'timed-event-overlay';
 
-        const visibleEvents = matches.slice(0, 2);
-        visibleEvents.forEach((eventItem) => {
+        const sortedMatches = [...matches].sort((firstEvent, secondEvent) => {
+          const firstRange = getTimedEventMinuteRange(firstEvent);
+          const secondRange = getTimedEventMinuteRange(secondEvent);
+
+          const firstStart = firstRange?.startMinutes ?? 0;
+          const secondStart = secondRange?.startMinutes ?? 0;
+          if (firstStart !== secondStart) {
+            return firstStart - secondStart;
+          }
+
+          return String(firstEvent.title || '').localeCompare(String(secondEvent.title || ''));
+        });
+
+        sortedMatches.forEach((eventItem) => {
           const badge = document.createElement('div');
-          badge.className = 'timed-event-badge';
+          const typeClass = eventItem.type === 'birthday'
+            ? 'timed-event-badge-birthday'
+            : 'timed-event-badge-event';
+          badge.className = `timed-event-badge ${typeClass}`;
+          if (sortedMatches.length > 1) {
+            badge.classList.add('timed-event-badge-overlap');
+          }
 
           const startLabel = formatTimeInputLabel(eventItem.startTime || '');
           const endLabel = formatTimeInputLabel(eventItem.endTime || '');
           const title = eventItem.title || 'Event';
-          badge.textContent = `${title} (${startLabel}-${endLabel})`;
+          badge.textContent = `${startLabel} - ${endLabel} • ${title}`;
           overlay.appendChild(badge);
         });
-
-        if (matches.length > visibleEvents.length) {
-          const moreBadge = document.createElement('div');
-          moreBadge.className = 'timed-event-badge timed-event-badge-more';
-          moreBadge.textContent = `+${matches.length - visibleEvents.length} more`;
-          overlay.appendChild(moreBadge);
-        }
 
         td.appendChild(overlay);
       }

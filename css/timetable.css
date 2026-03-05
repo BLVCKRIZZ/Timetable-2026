@@ -904,7 +904,7 @@
     font-size: 10px;
     line-height: 1.2;
     color: var(--ink);
-    background: var(--event-chip-deep, rgba(79,70,229,0.12));
+    background: var(--event-chip-base, rgba(200,75,17,0.06));
     border: 1px solid var(--line);
     border-radius: 4px;
     padding: 2px 4px;
@@ -913,12 +913,17 @@
     text-overflow: ellipsis;
   }
 
-  .timed-event-badge-more {
-    background: var(--event-chip-base, rgba(200,75,17,0.06));
+  .timed-event-badge-event {
+    background: var(--event-chip-deep, rgba(79,70,229,0.12));
   }
 
-  td.timed-event-overlap .timed-event-badge {
+  .timed-event-badge-birthday {
+    background: var(--event-chip-lunch, rgba(245,158,11,0.16));
+  }
+
+  .timed-event-badge-overlap {
     background: var(--event-chip-meeting, rgba(220,38,38,0.12));
+    border-color: rgba(220, 38, 38, 0.35);
   }
 
   td input:hover, td textarea:hover {
