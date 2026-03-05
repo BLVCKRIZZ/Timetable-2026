@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-44';
+  const APP_BUILD_VERSION = '20260305-45';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -1292,7 +1292,7 @@
     showToast(existingEvent ? 'Adjust time period, then tap Save' : 'Adjust time period, then tap Add');
   }
 
-  async function saveCellEditSheet() {
+  async function saveCellEditSheet(shouldOpenTimePrompt = true) {
     if (!activeCellEditorInput) {
       closeCellEditSheet();
       return;
@@ -1305,8 +1305,14 @@
     applyEventChip(activeCellEditorInput);
     updateNowLine();
     closeCellEditSheet();
-    await maybePromptTimedEventForCell(activeCellEditorInput, nextValue);
+    if (shouldOpenTimePrompt) {
+      await maybePromptTimedEventForCell(activeCellEditorInput, nextValue);
+    }
     showToast('Cell updated');
+  }
+
+  async function saveCellEditSheetWithTimePrompt() {
+    await saveCellEditSheet(true);
   }
 
   function clearCellEditSheet() {
