@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-36';
+  const APP_BUILD_VERSION = '20260305-37';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -1586,9 +1586,6 @@
 
     if (authMode !== 'signin') {
       setAuthMode('signin');
-      appStatus.textContent = 'Sign in with email and password';
-      appStatus.style.color = '#888';
-      return;
     }
 
     if (!ensureSupabaseClient()) {
@@ -1617,6 +1614,10 @@
         showAppShell();
         appStatus.textContent = 'Signed in';
         appStatus.style.color = '#888';
+      })
+      .catch(() => {
+        appStatus.textContent = 'Unable to sign in right now. Please try again.';
+        appStatus.style.color = '#b42318';
       });
   }
 
@@ -1687,6 +1688,10 @@
         if (requiresEmailConfirmation) {
           showToast('Check your email to confirm your account');
         }
+      })
+      .catch(() => {
+        appStatus.textContent = 'Unable to create account right now. Please try again.';
+        appStatus.style.color = '#b42318';
       });
   }
 
