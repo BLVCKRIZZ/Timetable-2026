@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#fffdf7">
 <title>Timetable</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/timetable.css?v=20260305-45">
+  <link rel="stylesheet" href="./css/timetable.css?v=20260305-46">
 </head>
 <body>
 
@@ -44,6 +44,7 @@
         <span class="settings-title">Timetable Tools</span>
         <button class="btn" data-requires-admin onclick="addColumn()">+ Add Column</button>
         <button class="btn" data-requires-admin onclick="removeColumn()">− Remove Column</button>
+        <button class="btn" data-requires-admin onclick="openSelectedCellTimePrompt()">Set Selected Cell Time</button>
         <button class="btn danger" data-requires-admin onclick="removeSelectedItem()">Remove Selected</button>
         <button class="btn danger" data-requires-admin onclick="clearAll()">Clear All</button>
       </div>
@@ -253,7 +254,7 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/timetable.js?v=20260305-45"></script>
+  <script src="./js/timetable.js?v=20260305-46"></script>
 </body>
 </html>
 

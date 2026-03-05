@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-45';
+  const APP_BUILD_VERSION = '20260305-46';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -1191,6 +1191,37 @@
     }
     addRow();
     showToast('Time slot added');
+  }
+
+  async function openSelectedCellTimePrompt() {
+    if (!isAdmin) return;
+
+    const targetInput = selectedEditableCell;
+    if (!targetInput) {
+      showToast('Select a day cell first');
+      return;
+    }
+
+    const td = targetInput.closest('td');
+    const tr = targetInput.closest('tr');
+    if (!td || !tr) {
+      showToast('Select a day cell first');
+      return;
+    }
+
+    const columnIndex = Array.from(tr.children).indexOf(td);
+    if (columnIndex < 1 || columnIndex > 7) {
+      showToast('Select a day cell, not the time column');
+      return;
+    }
+
+    const title = String(targetInput.value || '').trim();
+    if (!title) {
+      showToast('Type an event title in the selected cell first');
+      return;
+    }
+
+    await maybePromptTimedEventForCell(targetInput, title);
   }
 
   function openCellEditSheet(inputElement) {
