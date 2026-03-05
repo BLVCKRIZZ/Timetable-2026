@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-50';
+  const APP_BUILD_VERSION = '20260305-51';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -2718,87 +2718,97 @@
 
   function refreshTimedEventsOnTimetable() {
     const tbody = document.getElementById('tbody');
-    if (!tbody) return;
+    const tableWrap = document.querySelector('.table-wrap');
+    if (!tbody || !tableWrap) return;
 
-    document.querySelectorAll('.timed-event-overlay').forEach((overlay) => overlay.remove());
-    document.querySelectorAll('#tbody td.timed-event-cell, #tbody td.timed-event-overlap').forEach((cell) => {
-      cell.classList.remove('timed-event-cell', 'timed-event-overlap');
-    });
+    document.querySelectorAll('.timed-event-layer').forEach((layer) => layer.remove());
 
     const rows = Array.from(tbody.querySelectorAll('tr'));
     if (!rows.length) return;
 
-    const slotStarts = rows.map((row) => {
-      const timeCellInput = row.children[0]?.querySelector('input, textarea');
-      return parseTimeToMinutes(timeCellInput?.value || '');
-    });
+    const firstRow = rows[0];
+    const lastRow = rows[rows.length - 1];
+    const firstTimeInput = firstRow?.children[0]?.querySelector('input, textarea');
+    const lastTimeInput = lastRow?.children[0]?.querySelector('input, textarea');
+    const firstMinute = parseTimeToMinutes(firstTimeInput?.value || '');
+    const lastMinute = parseTimeToMinutes(lastTimeInput?.value || '');
+    if (!Number.isFinite(firstMinute) || !Number.isFinite(lastMinute)) return;
 
-    if (slotStarts.some((minutes) => minutes === null)) return;
+    const rangeStartMinute = firstMinute;
+    const rangeEndMinute = Math.min((24 * 60), lastMinute + (timeSettings.intervalMinutes || 30));
+    const totalMinutes = Math.max(1, rangeEndMinute - rangeStartMinute);
 
+    const tbodyRect = tbody.getBoundingClientRect();
     const weekIsoKeys = getDisplayedWeekIsoKeys();
 
-    rows.forEach((row, rowIndex) => {
-      const slotStart = slotStarts[rowIndex];
-      const nextStart = slotStarts[rowIndex + 1];
-      const slotEnd = Number.isFinite(nextStart)
-        ? nextStart
-        : Math.min((24 * 60), slotStart + (timeSettings.intervalMinutes || 30));
+    for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+      const firstDayCell = firstRow.children[dayOffset + 1];
+      if (!firstDayCell) continue;
 
-      for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-        const td = row.children[dayOffset + 1];
-        if (!td) continue;
+      const dayRect = firstDayCell.getBoundingClientRect();
+      const layer = document.createElement('div');
+      layer.className = 'timed-event-layer';
+      layer.style.left = `${dayRect.left - tbodyRect.left}px`;
+      layer.style.width = `${dayRect.width}px`;
+      tableWrap.appendChild(layer);
 
-        const isoKey = weekIsoKeys[dayOffset];
-        const dayEvents = Array.isArray(userCalendarEvents[isoKey]) ? userCalendarEvents[isoKey] : [];
-        const matches = dayEvents.filter((eventItem) => {
-          const range = getTimedEventMinuteRange(eventItem);
-          if (!range) return false;
-          return range.startMinutes < slotEnd && range.endMinutes > slotStart;
-        });
+      const isoKey = weekIsoKeys[dayOffset];
+      const dayEvents = Array.isArray(userCalendarEvents[isoKey]) ? userCalendarEvents[isoKey] : [];
+      const timedEvents = dayEvents
+        .map((eventItem) => ({ eventItem, range: getTimedEventMinuteRange(eventItem) }))
+        .filter((entry) => !!entry.range)
+        .sort((a, b) => a.range.startMinutes - b.range.startMinutes);
 
-        if (!matches.length) continue;
+      const lanesEnd = [];
+      timedEvents.forEach((entry) => {
+        const range = entry.range;
+        let laneIndex = lanesEnd.findIndex((laneEndMinute) => laneEndMinute <= range.startMinutes);
+        if (laneIndex === -1) {
+          laneIndex = lanesEnd.length;
+          lanesEnd.push(range.endMinutes);
+        } else {
+          lanesEnd[laneIndex] = range.endMinutes;
+        }
+        entry.laneIndex = laneIndex;
+      });
 
-        td.classList.add('timed-event-cell');
-        if (matches.length > 1) {
-          td.classList.add('timed-event-overlap');
+      const laneCount = Math.max(1, lanesEnd.length);
+      const blockGap = 4;
+      const laneWidth = (dayRect.width - (blockGap * (laneCount - 1))) / laneCount;
+
+      timedEvents.forEach((entry) => {
+        const range = entry.range;
+        const clampedStart = Math.max(rangeStartMinute, Math.min(rangeEndMinute, range.startMinutes));
+        const clampedEnd = Math.max(rangeStartMinute, Math.min(rangeEndMinute, range.endMinutes));
+        if (clampedEnd <= clampedStart) return;
+
+        const startRatio = (clampedStart - rangeStartMinute) / totalMinutes;
+        const endRatio = (clampedEnd - rangeStartMinute) / totalMinutes;
+        const topPx = startRatio * tbodyRect.height;
+        const heightPx = Math.max(12, (endRatio - startRatio) * tbodyRect.height);
+
+        const block = document.createElement('div');
+        const typeClass = entry.eventItem.type === 'birthday'
+          ? 'timed-event-block-birthday'
+          : 'timed-event-block-event';
+        block.className = `timed-event-block ${typeClass}`;
+        if (laneCount > 1) {
+          block.classList.add('timed-event-block-overlap');
         }
 
-        const overlay = document.createElement('div');
-        overlay.className = 'timed-event-overlay';
+        block.style.top = `${topPx}px`;
+        block.style.height = `${heightPx}px`;
+        block.style.left = `${entry.laneIndex * (laneWidth + blockGap)}px`;
+        block.style.width = `${laneWidth}px`;
 
-        const sortedMatches = [...matches].sort((firstEvent, secondEvent) => {
-          const firstRange = getTimedEventMinuteRange(firstEvent);
-          const secondRange = getTimedEventMinuteRange(secondEvent);
-
-          const firstStart = firstRange?.startMinutes ?? 0;
-          const secondStart = secondRange?.startMinutes ?? 0;
-          if (firstStart !== secondStart) {
-            return firstStart - secondStart;
-          }
-
-          return String(firstEvent.title || '').localeCompare(String(secondEvent.title || ''));
-        });
-
-        sortedMatches.forEach((eventItem) => {
-          const badge = document.createElement('div');
-          const typeClass = eventItem.type === 'birthday'
-            ? 'timed-event-badge-birthday'
-            : 'timed-event-badge-event';
-          badge.className = `timed-event-badge ${typeClass}`;
-          if (sortedMatches.length > 1) {
-            badge.classList.add('timed-event-badge-overlap');
-          }
-
-          const startLabel = formatTimeInputLabel(eventItem.startTime || '');
-          const endLabel = formatTimeInputLabel(eventItem.endTime || '');
-          const title = eventItem.title || 'Event';
-          badge.textContent = `${startLabel} - ${endLabel} • ${title}`;
-          overlay.appendChild(badge);
-        });
-
-        td.appendChild(overlay);
-      }
-    });
+        const startLabel = formatTimeInputLabel(entry.eventItem.startTime || '');
+        const endLabel = formatTimeInputLabel(entry.eventItem.endTime || '');
+        const title = entry.eventItem.title || 'Event';
+        block.textContent = `${startLabel}-${endLabel} • ${title}`;
+        block.title = `${title}\n${startLabel} - ${endLabel}`;
+        layer.appendChild(block);
+      });
+    }
   }
 
   function countTimedEventOverlapsForDate(isoKey) {
