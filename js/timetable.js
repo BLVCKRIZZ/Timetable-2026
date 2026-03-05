@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-51';
+  const APP_BUILD_VERSION = '20260305-52';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -78,6 +78,7 @@
   let activeCellEditorInput = null;
   let touchNavStartX = 0;
   let touchNavStartY = 0;
+  let hasInitialTimeScroll = false;
   let touchNavTracking = false;
   let calendarCollapsedMobile = true;
   let actionDialogResolver = null;
@@ -2696,6 +2697,55 @@
     return slots;
   }
 
+  function getPixelsPerMinute() {
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1024;
+    if (viewportWidth <= 480) return 0.56;
+    if (viewportWidth <= 768) return 0.64;
+    if (viewportWidth <= 1024) return 0.78;
+    return 0.92;
+  }
+
+  function applyTimeScaleLayout() {
+    const tbody = document.getElementById('tbody');
+    if (!tbody) return;
+
+    const rowHeight = Math.max(22, Math.round((timeSettings.intervalMinutes || 30) * getPixelsPerMinute()));
+    tbody.style.setProperty('--slot-row-height', `${rowHeight}px`);
+  }
+
+  function scrollToInitialTimePosition() {
+    if (hasInitialTimeScroll) return;
+
+    const tableWrap = document.querySelector('.table-wrap');
+    const tbody = document.getElementById('tbody');
+    if (!tableWrap || !tbody || !tbody.offsetHeight) return;
+
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    if (!rows.length) return;
+
+    const firstTimeInput = rows[0]?.children[0]?.querySelector('input, textarea');
+    const firstMinute = parseTimeToMinutes(firstTimeInput?.value || '');
+    if (!Number.isFinite(firstMinute)) return;
+
+    const lastTimeInput = rows[rows.length - 1]?.children[0]?.querySelector('input, textarea');
+    const lastMinute = parseTimeToMinutes(lastTimeInput?.value || '');
+    const rangeEndMinute = Number.isFinite(lastMinute)
+      ? Math.min((24 * 60), lastMinute + (timeSettings.intervalMinutes || 30))
+      : ((24 * 60) - 1);
+
+    const nowMinute = (() => {
+      const now = getNowInActiveTimeZone();
+      return (now.getHours() * 60) + now.getMinutes();
+    })();
+    const preferredMinute = Math.max(firstMinute, Math.min(rangeEndMinute, Number.isFinite(nowMinute) ? nowMinute : (8 * 60)));
+
+    const ppm = getPixelsPerMinute();
+    const topWithinGrid = (preferredMinute - firstMinute) * ppm;
+    const targetTop = Math.max(0, (tbody.offsetTop + topWithinGrid) - (tableWrap.clientHeight * 0.3));
+    tableWrap.scrollTo({ top: targetTop, behavior: 'auto' });
+    hasInitialTimeScroll = true;
+  }
+
   function getTimedEventMinuteRange(eventItem) {
     const startMinutes = timeInputToMinutes(eventItem?.startTime || '');
     const endMinutes = timeInputToMinutes(eventItem?.endTime || '');
@@ -2722,6 +2772,7 @@
     if (!tbody || !tableWrap) return;
 
     document.querySelectorAll('.timed-event-layer').forEach((layer) => layer.remove());
+    document.querySelectorAll('.time-hour-lines').forEach((lines) => lines.remove());
 
     const rows = Array.from(tbody.querySelectorAll('tr'));
     if (!rows.length) return;
@@ -2737,9 +2788,30 @@
     const rangeStartMinute = firstMinute;
     const rangeEndMinute = Math.min((24 * 60), lastMinute + (timeSettings.intervalMinutes || 30));
     const totalMinutes = Math.max(1, rangeEndMinute - rangeStartMinute);
+    const pixelsPerMinute = getPixelsPerMinute();
 
     const tbodyRect = tbody.getBoundingClientRect();
     const weekIsoKeys = getDisplayedWeekIsoKeys();
+
+    const firstDayCell = firstRow.children[1];
+    const lastDayCell = firstRow.children[7];
+    if (firstDayCell && lastDayCell) {
+      const firstDayRect = firstDayCell.getBoundingClientRect();
+      const lastDayRect = lastDayCell.getBoundingClientRect();
+
+      const hourLines = document.createElement('div');
+      hourLines.className = 'time-hour-lines';
+      hourLines.style.left = `${firstDayRect.left - tbodyRect.left}px`;
+      hourLines.style.width = `${lastDayRect.right - firstDayRect.left}px`;
+      hourLines.style.top = `${tbody.offsetTop}px`;
+      hourLines.style.height = `${tbody.offsetHeight}px`;
+
+      const hourStepPx = Math.max(1, 60 * pixelsPerMinute);
+      const hourOffsetMinutes = (60 - (rangeStartMinute % 60)) % 60;
+      hourLines.style.backgroundSize = `100% ${hourStepPx}px`;
+      hourLines.style.backgroundPosition = `0 ${hourOffsetMinutes * pixelsPerMinute}px`;
+      tableWrap.appendChild(hourLines);
+    }
 
     for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
       const firstDayCell = firstRow.children[dayOffset + 1];
@@ -2750,6 +2822,8 @@
       layer.className = 'timed-event-layer';
       layer.style.left = `${dayRect.left - tbodyRect.left}px`;
       layer.style.width = `${dayRect.width}px`;
+      layer.style.top = `${tbody.offsetTop}px`;
+      layer.style.height = `${tbody.offsetHeight}px`;
       tableWrap.appendChild(layer);
 
       const isoKey = weekIsoKeys[dayOffset];
@@ -2782,10 +2856,8 @@
         const clampedEnd = Math.max(rangeStartMinute, Math.min(rangeEndMinute, range.endMinutes));
         if (clampedEnd <= clampedStart) return;
 
-        const startRatio = (clampedStart - rangeStartMinute) / totalMinutes;
-        const endRatio = (clampedEnd - rangeStartMinute) / totalMinutes;
-        const topPx = startRatio * tbodyRect.height;
-        const heightPx = Math.max(12, (endRatio - startRatio) * tbodyRect.height);
+        const topPx = (clampedStart - rangeStartMinute) * pixelsPerMinute;
+        const heightPx = Math.max(10, (clampedEnd - clampedStart) * pixelsPerMinute);
 
         const block = document.createElement('div');
         const typeClass = entry.eventItem.type === 'birthday'
@@ -2804,7 +2876,25 @@
         const startLabel = formatTimeInputLabel(entry.eventItem.startTime || '');
         const endLabel = formatTimeInputLabel(entry.eventItem.endTime || '');
         const title = entry.eventItem.title || 'Event';
-        block.textContent = `${startLabel}-${endLabel} • ${title}`;
+
+        const titleLine = document.createElement('div');
+        titleLine.className = 'timed-event-line timed-event-line-title';
+        titleLine.textContent = title;
+        block.appendChild(titleLine);
+
+        const metaLines = [
+          `📍 ${String(entry.eventItem.location || `${startLabel} - ${endLabel}`)}`,
+          `👥 ${String(entry.eventItem.attendee || (entry.eventItem.type === 'birthday' ? 'Birthday' : 'Event'))}`,
+          `📝 ${String(entry.eventItem.notes || `${Math.max(1, clampedEnd - clampedStart)} min`)}`
+        ];
+        const visibleMetaCount = heightPx < 20 ? 0 : heightPx < 34 ? 1 : heightPx < 48 ? 2 : 3;
+        for (let index = 0; index < visibleMetaCount; index++) {
+          const meta = document.createElement('div');
+          meta.className = 'timed-event-line timed-event-line-meta';
+          meta.textContent = metaLines[index];
+          block.appendChild(meta);
+        }
+
         block.title = `${title}\n${startLabel} - ${endLabel}`;
         layer.appendChild(block);
       });
@@ -2854,9 +2944,11 @@
     clearColumnSelection();
     bindHeaderSelection();
     applyTimetableColumnVisibility();
+    applyTimeScaleLayout();
     updateTodayHighlight();
     updateNowLine();
     refreshTimedEventsOnTimetable();
+    setTimeout(scrollToInitialTimePosition, 0);
   }
 
   function applyTimeSettings(nextSettings, options = {}) {

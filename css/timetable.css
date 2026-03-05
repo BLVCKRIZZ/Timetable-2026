@@ -854,6 +854,10 @@
     min-width: 120px;
   }
 
+  #tbody tr {
+    height: var(--slot-row-height, 52px);
+  }
+
   td:first-child {
     border-right: 1px solid var(--line);
     min-width: 100px;
@@ -878,7 +882,8 @@
     outline: none;
     resize: none;
     cursor: text;
-    min-height: 52px;
+    min-height: 100%;
+    height: 100%;
     border-radius: 3px;
     transition: background 0.15s ease, box-shadow 0.15s ease;
   }
@@ -894,9 +899,16 @@
   .timed-event-layer {
     position: absolute;
     top: 0;
-    bottom: 0;
+    bottom: auto;
     pointer-events: none;
     z-index: 3;
+  }
+
+  .time-hour-lines {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1;
+    background-image: linear-gradient(to bottom, rgba(88, 72, 53, 0.2) 1px, transparent 1px);
   }
 
   .timed-event-block {
@@ -911,22 +923,43 @@
     position: absolute;
     box-sizing: border-box;
     overflow: hidden;
-    white-space: pre-wrap;
-    word-break: break-word;
+    white-space: nowrap;
+    border-left: 3px solid rgba(45, 35, 25, 0.42);
     box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   }
 
   .timed-event-block-event {
     background: var(--event-chip-deep, rgba(79,70,229,0.16));
+    border-left-color: rgba(44, 30, 122, 0.55);
   }
 
   .timed-event-block-birthday {
     background: var(--event-chip-lunch, rgba(245,158,11,0.18));
+    border-left-color: rgba(148, 94, 5, 0.58);
   }
 
   .timed-event-block-overlap {
     background: var(--event-chip-meeting, rgba(220,38,38,0.15));
     border-color: rgba(220, 38, 38, 0.38);
+    border-left-color: rgba(127, 29, 29, 0.58);
+  }
+
+  .timed-event-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .timed-event-line-title {
+    font-weight: 700;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  .timed-event-line-meta {
+    font-size: 9px;
+    line-height: 1.15;
+    opacity: 0.92;
   }
 
   .timed-event-badge {
@@ -940,6 +973,22 @@
     padding: 2px 4px;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  @media (min-width: 1100px) {
+    .table-wrap {
+      overflow-x: hidden;
+    }
+
+    #timetable {
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    #timetable td,
+    #timetable th {
+      min-width: 0;
+    }
   }
 
   .timed-event-badge-event {
