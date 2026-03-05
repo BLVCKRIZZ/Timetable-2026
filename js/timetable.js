@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-47';
+  const APP_BUILD_VERSION = '20260305-48';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -1102,6 +1102,7 @@
   function resolveActionDialog(confirmed) {
     const dialog = document.getElementById('action-dialog');
     const input = document.getElementById('action-dialog-input');
+    const secondInput = document.getElementById('action-dialog-input-2');
     if (!dialog) return;
 
     dialog.classList.remove('open');
@@ -1110,7 +1111,11 @@
     const resolver = actionDialogResolver;
     actionDialogResolver = null;
     if (resolver) {
-      resolver({ confirmed, value: input?.value || '' });
+      resolver({
+        confirmed,
+        value: input?.value || '',
+        value2: secondInput?.value || ''
+      });
     }
   }
 
@@ -1122,13 +1127,19 @@
       cancelText = 'Cancel',
       showInput = false,
       inputValue = '',
-      inputPlaceholder = ''
+      inputPlaceholder = '',
+      inputType = 'text',
+      showSecondInput = false,
+      secondInputValue = '',
+      secondInputPlaceholder = '',
+      secondInputType = 'text'
     } = options;
 
     const dialog = document.getElementById('action-dialog');
     const titleEl = document.getElementById('action-dialog-title');
     const messageEl = document.getElementById('action-dialog-message');
     const input = document.getElementById('action-dialog-input');
+    const secondInput = document.getElementById('action-dialog-input-2');
     const buttons = dialog?.querySelectorAll('.action-dialog-actions .btn');
 
     if (!dialog || !titleEl || !messageEl || !input || !buttons || buttons.length < 2) {
@@ -1141,14 +1152,24 @@
     buttons[1].textContent = cancelText;
 
     input.classList.toggle('show', showInput);
+    input.type = inputType;
     input.value = inputValue;
     input.placeholder = inputPlaceholder;
+
+    if (secondInput) {
+      secondInput.classList.toggle('show', showSecondInput);
+      secondInput.type = secondInputType;
+      secondInput.value = secondInputValue;
+      secondInput.placeholder = secondInputPlaceholder;
+    }
 
     dialog.classList.add('open');
     dialog.setAttribute('aria-hidden', 'false');
 
     if (showInput) {
       setTimeout(() => input.focus(), 0);
+    } else if (showSecondInput && secondInput) {
+      setTimeout(() => secondInput.focus(), 0);
     }
 
     return new Promise((resolve) => {
@@ -1359,35 +1380,28 @@
     const defaultStart = normalizeTimeInputValue(existingEvent?.startTime || context.startTime);
     const defaultEnd = normalizeTimeInputValue(existingEvent?.endTime || context.endTime);
 
-    const startStep = await openActionDialog({
-      title: 'Start time',
-      message: 'Enter start time (24-hour HH:MM, e.g. 09:12)',
-      confirmText: 'Next',
+    const timeStep = await openActionDialog({
+      title: 'Event duration',
+      message: 'Set exact start and end time',
+      confirmText: 'Save',
       cancelText: 'Cancel',
       showInput: true,
-      inputValue: defaultStart,
-      inputPlaceholder: 'HH:MM'
+      inputType: 'time',
+      inputValue: defaultEnd,
+      inputPlaceholder: 'Start time',
+      showSecondInput: true,
+      secondInputType: 'time',
+      secondInputValue: defaultEnd,
+      secondInputPlaceholder: 'End time'
     });
-    if (!startStep.confirmed) return;
+    if (!timeStep.confirmed) return;
 
-    const normalizedStart = normalizeTimeInputValue(startStep.value);
+    const normalizedStart = normalizeTimeInputValue(timeStep.value);
+    const normalizedEnd = normalizeTimeInputValue(timeStep.value2);
     if (!normalizedStart) {
       showToast('Invalid start time. Use HH:MM (e.g. 09:12)');
       return;
     }
-
-    const endStep = await openActionDialog({
-      title: 'End time',
-      message: 'Enter end time (24-hour HH:MM, e.g. 11:45)',
-      confirmText: 'Save',
-      cancelText: 'Cancel',
-      showInput: true,
-      inputValue: defaultEnd,
-      inputPlaceholder: 'HH:MM'
-    });
-    if (!endStep.confirmed) return;
-
-    const normalizedEnd = normalizeTimeInputValue(endStep.value);
     if (!normalizedEnd) {
       showToast('Invalid end time. Use HH:MM (e.g. 11:45)');
       return;
