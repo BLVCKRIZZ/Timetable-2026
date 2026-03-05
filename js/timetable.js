@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-49';
+  const APP_BUILD_VERSION = '20260305-50';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -1129,10 +1129,12 @@
       inputValue = '',
       inputPlaceholder = '',
       inputType = 'text',
+      inputMode = '',
       showSecondInput = false,
       secondInputValue = '',
       secondInputPlaceholder = '',
-      secondInputType = 'text'
+      secondInputType = 'text',
+      secondInputMode = ''
     } = options;
 
     const dialog = document.getElementById('action-dialog');
@@ -1153,12 +1155,22 @@
 
     input.classList.toggle('show', showInput);
     input.type = inputType;
+    if (inputMode) {
+      input.setAttribute('inputmode', inputMode);
+    } else {
+      input.removeAttribute('inputmode');
+    }
     input.value = inputValue;
     input.placeholder = inputPlaceholder;
 
     if (secondInput) {
       secondInput.classList.toggle('show', showSecondInput);
       secondInput.type = secondInputType;
+      if (secondInputMode) {
+        secondInput.setAttribute('inputmode', secondInputMode);
+      } else {
+        secondInput.removeAttribute('inputmode');
+      }
       secondInput.value = secondInputValue;
       secondInput.placeholder = secondInputPlaceholder;
     }
@@ -1382,17 +1394,19 @@
 
     const timeStep = await openActionDialog({
       title: 'Event duration',
-      message: 'Set exact start and end time',
+      message: 'Set exact start and end time (24-hour HH:MM)',
       confirmText: 'Save',
       cancelText: 'Cancel',
       showInput: true,
-      inputType: 'time',
-      inputValue: defaultEnd,
-      inputPlaceholder: 'Start time',
+      inputType: 'text',
+      inputMode: 'numeric',
+      inputValue: defaultStart,
+      inputPlaceholder: 'Start (e.g. 09:12)',
       showSecondInput: true,
-      secondInputType: 'time',
+      secondInputType: 'text',
+      secondInputMode: 'numeric',
       secondInputValue: defaultEnd,
-      secondInputPlaceholder: 'End time'
+      secondInputPlaceholder: 'End (e.g. 11:45)'
     });
     if (!timeStep.confirmed) return;
 
