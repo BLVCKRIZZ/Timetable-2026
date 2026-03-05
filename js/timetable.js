@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-38';
+  const APP_BUILD_VERSION = '20260305-39';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -3213,6 +3213,32 @@
     return 'event';
   }
 
+  function normalizeTimeInputValue(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const match = raw.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+    if (!match) return '';
+    return `${match[1]}:${match[2]}`;
+  }
+
+  function timeInputToMinutes(value) {
+    const normalized = normalizeTimeInputValue(value);
+    if (!normalized) return null;
+    const [hour, minute] = normalized.split(':').map(Number);
+    return (hour * 60) + minute;
+  }
+
+  function formatTimeInputLabel(value) {
+    const normalized = normalizeTimeInputValue(value);
+    if (!normalized) return '';
+
+    const [hour24Raw, minuteRaw] = normalized.split(':');
+    const hour24 = Number(hour24Raw);
+    const suffix = hour24 >= 12 ? 'PM' : 'AM';
+    const hour12 = hour24 % 12 || 12;
+    return `${hour12}:${minuteRaw} ${suffix}`;
+  }
+
   function canEditCalendarEvents() {
     return isAdmin && isCustomizePanelOpen();
   }
@@ -3329,6 +3355,8 @@
         type: normalizeCalendarEventType(existingEvent.type || 'event'),
         startDate: rangeStart,
         endDate: rangeEnd,
+        startTime: normalizeTimeInputValue(existingEvent.startTime || ''),
+        endTime: normalizeTimeInputValue(existingEvent.endTime || ''),
         rangeId: existingEvent.rangeId || null
       };
     } else {
@@ -3339,6 +3367,8 @@
         type: 'event',
         startDate: normalizedIsoKey,
         endDate: normalizedIsoKey,
+        startTime: '',
+        endTime: '',
         rangeId: null
       };
     }
@@ -3369,6 +3399,23 @@
       calendarEventEditorState.endDate,
       calendarEventEditorState.isoKey
     );
+    const startTime = normalizeTimeInputValue(calendarEventEditorState.startTime);
+    const endTime = normalizeTimeInputValue(calendarEventEditorState.endTime);
+
+    if ((startTime && !endTime) || (!startTime && endTime)) {
+      showToast('Choose both start and end time');
+      return;
+    }
+
+    if (startTime && endTime) {
+      const startMinutes = timeInputToMinutes(startTime);
+      const endMinutes = timeInputToMinutes(endTime);
+      if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
+        showToast('End time must be after start time');
+        return;
+      }
+    }
+
     const rangeKeys = getDateRangeKeys(startDate, endDate);
     if (!rangeKeys.length) {
       showToast('Choose a valid date range');
@@ -3406,7 +3453,9 @@
         rangeEnd: rangeKeys[rangeKeys.length - 1],
         title,
         type,
-        allDay: true
+        allDay: !(startTime && endTime),
+        startTime,
+        endTime
       });
     });
 
@@ -3598,7 +3647,13 @@
 
         const eventText = document.createElement('span');
         eventText.className = 'user-event-text';
-        eventText.textContent = eventItem.title || 'Event';
+        const eventTitle = eventItem.title || 'Event';
+        const eventStartLabel = formatTimeInputLabel(eventItem.startTime || '');
+        const eventEndLabel = formatTimeInputLabel(eventItem.endTime || '');
+        const eventTimeLabel = eventStartLabel && eventEndLabel
+          ? ` (${eventStartLabel} - ${eventEndLabel})`
+          : '';
+        eventText.textContent = `${eventTitle}${eventTimeLabel}`;
         eventTag.appendChild(eventText);
 
         if (isEditable) {
@@ -3690,6 +3745,26 @@
           );
         });
 
+        const startTimeInput = document.createElement('input');
+        startTimeInput.className = 'calendar-editor-input';
+        startTimeInput.type = 'time';
+        startTimeInput.value = normalizeTimeInputValue(calendarEventEditorState.startTime || '');
+        startTimeInput.title = 'Start time';
+        startTimeInput.addEventListener('input', () => {
+          if (!calendarEventEditorState) return;
+          calendarEventEditorState.startTime = normalizeTimeInputValue(startTimeInput.value);
+        });
+
+        const endTimeInput = document.createElement('input');
+        endTimeInput.className = 'calendar-editor-input';
+        endTimeInput.type = 'time';
+        endTimeInput.value = normalizeTimeInputValue(calendarEventEditorState.endTime || '');
+        endTimeInput.title = 'End time';
+        endTimeInput.addEventListener('input', () => {
+          if (!calendarEventEditorState) return;
+          calendarEventEditorState.endTime = normalizeTimeInputValue(endTimeInput.value);
+        });
+
         const editorActions = document.createElement('div');
         editorActions.className = 'calendar-editor-actions';
 
@@ -3718,6 +3793,8 @@
         editorWrap.appendChild(typeSelect);
         editorWrap.appendChild(startDateInput);
         editorWrap.appendChild(endDateInput);
+        editorWrap.appendChild(startTimeInput);
+        editorWrap.appendChild(endTimeInput);
         editorWrap.appendChild(editorActions);
         dayCell.appendChild(editorWrap);
       }
