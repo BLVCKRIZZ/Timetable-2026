@@ -1,6 +1,6 @@
   const SUPABASE_URL = 'https://duxyczrninmfryosbjzy.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1eHljenJuaW5tZnJ5b3Nianp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTg3NDksImV4cCI6MjA4NzY3NDc0OX0.dEy7ticDAIXv-8FrQ34b2FfLbi-S9Dx8xwTVWXr64zc';
-  const APP_BUILD_VERSION = '20260305-42';
+  const APP_BUILD_VERSION = '20260305-43';
   const LOCALHOST_AUTH_REDIRECT_URL = 'http://127.0.0.1:5500/index.html';
   const THEME_PRESETS = [
     { bg: '#f5f0e8', paper: '#fffdf7', ink: '#1a1208', accent: '#c84b11', line: '#d9d0bc', cellHover: '#fff3e0', shadow: 'rgba(0,0,0,0.08)' },
@@ -1259,26 +1259,33 @@
     const context = getTimetableEventCellContext(inputElement);
     if (!context) return;
 
+    const normalizedTitle = title.toLowerCase();
+    const existingEvent = getUserEventsForDate(context.isoKey).find((eventItem) => {
+      return String(eventItem?.title || '').trim().toLowerCase() === normalizedTitle;
+    }) || null;
+
     const { confirmed } = await openActionDialog({
       title: 'Set time period',
-      message: `Set start and end time for "${title}"?`,
-      confirmText: 'Set Time',
+      message: existingEvent
+        ? `Edit start and end time for existing "${title}" event?`
+        : `Set start and end time for "${title}"?`,
+      confirmText: existingEvent ? 'Edit Time' : 'Set Time',
       cancelText: 'Skip'
     });
     if (!confirmed) return;
 
-    openCalendarEventEditor(context.isoKey);
+    openCalendarEventEditor(context.isoKey, existingEvent?.id || null);
     if (!calendarEventEditorState) return;
 
     calendarEventEditorState.title = title;
-    calendarEventEditorState.type = 'event';
+    calendarEventEditorState.type = normalizeCalendarEventType(existingEvent?.type || 'event');
     calendarEventEditorState.startDate = context.isoKey;
     calendarEventEditorState.endDate = context.isoKey;
-    calendarEventEditorState.startTime = context.startTime;
-    calendarEventEditorState.endTime = context.endTime;
+    calendarEventEditorState.startTime = normalizeTimeInputValue(existingEvent?.startTime || context.startTime);
+    calendarEventEditorState.endTime = normalizeTimeInputValue(existingEvent?.endTime || context.endTime);
 
     renderCalendar();
-    showToast('Adjust time period, then tap Add');
+    showToast(existingEvent ? 'Adjust time period, then tap Save' : 'Adjust time period, then tap Add');
   }
 
   async function saveCellEditSheet() {
